@@ -1,0 +1,74 @@
+{
+  "$schema": "https://agentskills.io/schema.json",
+  "name": "yk-dev-pipeline-skills",
+  "version": "1.0.0",
+  "description": "Complete 6-phase JS/TS development pipeline for Claude Code",
+  "author": "Yevhen Kondratyev",
+  "license": "MIT",
+  "compatibility": {
+    "claude-code": ">=1.0.0",
+    "platforms": ["darwin", "linux", "win32"]
+  },
+  "skills": {
+    "yk-dev-pipeline": {
+      "entry": "skills/SKILL.md",
+      "type": "router",
+      "model": "sonnet"
+    },
+    "yk-brainstorm": {
+      "entry": "skills/brainstorm/SKILL.md",
+      "type": "phase",
+      "model": "opus",
+      "phase": 1
+    },
+    "yk-planning": {
+      "entry": "skills/planning/SKILL.md",
+      "type": "phase",
+      "model": "sonnet",
+      "phase": 2
+    },
+    "yk-implementation": {
+      "entry": "skills/implementation/SKILL.md",
+      "type": "phase",
+      "model": "opus",
+      "phase": 3,
+      "references": [
+        "skills/implementation/references/js-ts-best-practices.md",
+        "skills/implementation/references/databases-sql.md",
+        "skills/implementation/references/databases-nosql.md",
+        "skills/implementation/references/databases-redis.md"
+      ]
+    },
+    "yk-code-review": {
+      "entry": "skills/code-review/SKILL.md",
+      "type": "phase",
+      "model": "opus",
+      "phase": 4,
+      "references": [
+        "skills/code-review/references/review-checklists.md"
+      ]
+    },
+    "yk-testing": {
+      "entry": "skills/testing/SKILL.md",
+      "type": "phase",
+      "model": "sonnet",
+      "phase": 5
+    },
+    "yk-documentation": {
+      "entry": "skills/documentation/SKILL.md",
+      "type": "phase",
+      "model": "haiku",
+      "phase": 6
+    }
+  },
+  "tags": [
+    "development",
+    "typescript",
+    "javascript",
+    "code-review",
+    "testing",
+    "documentation",
+    "pipeline",
+    "workflow"
+  ]
+}

@@ -29,7 +29,52 @@ A collection of **Claude AI skills** (structured instruction files) that guide C
 - **Redis** (40KB) — Caching, sessions, rate limiting, queues, pub/sub
 - **Review Checklists** (16KB) — Deep checklists for all 18 code review areas
 
+## Installation
+
+### Option 1: Install from Marketplace (Coming Soon)
+
+Once indexed by SkillsMP or SkillHub (usually within 48 hours of publishing):
+
+1. Search for "yk-dev-pipeline" in the marketplace
+2. Click "Install"
+3. Skills will be automatically added to your Claude Code
+
+### Option 2: Claude Code `/plugin` Command (Recommended)
+
+```bash
+# In Claude Code CLI
+/plugin install ykondrat/yk-dev-pipeline-skills
+
+# Restart Claude Code to apply changes
+```
+
+### Option 3: Manual Installation via Git
+
+```bash
+# Clone the repository
+git clone https://github.com/ykondrat/yk-dev-pipeline-skills.git
+
+# Copy skills to your Claude Code skills directory
+cp -r yk-dev-pipeline-skills/skills ~/.claude/skills/yk-dev-pipeline
+
+# Or for a specific project
+cp -r yk-dev-pipeline-skills/skills /path/to/your/project/.claude/skills/yk-dev-pipeline
+```
+
+### Option 4: Direct Download
+
+1. Download this repository as ZIP
+2. Extract to `~/.claude/skills/yk-dev-pipeline/`
+3. Restart Claude Code
+
+After installation, verify with:
+```bash
+/plugin list
+```
+
 ## Quick Start
+
+📖 **[Read the complete USAGE.md guide](USAGE.md)** for detailed instructions, workflows, and examples.
 
 ### Option 1: Claude Project (Recommended)
 
@@ -200,6 +245,35 @@ Areas where contributions are welcome:
 - Language-specific adaptations (Python, Go, Rust)
 - Bug fixes and improvements to existing skills
 
+## Publishing to Marketplaces
+
+This skill collection is designed to be automatically indexed by Claude skills marketplaces:
+
+- **SkillsMP**: Automatic indexing via GitHub topics (48 hours)
+- **SkillHub**: Automatic GitHub repository scanning
+- **AgentSkills.io**: Manual submission available
+
+### GitHub Topics Required
+Make sure your repository has these topics for automatic discovery:
+- `claude-skill`
+- `claude-code`
+- `anthropic`
+- `agent-skills`
+- `typescript`
+- `javascript`
+
+See [`.github/TOPICS.md`](.github/TOPICS.md) for complete list and instructions.
+
+## Security
+
+⚠️ **Important**: Always review skills before installation, especially from untrusted sources.
+
+This skill collection:
+- Contains only markdown instruction files (no executable code)
+- Has no external dependencies
+- Does not make network requests
+- Does not access credentials or sensitive data
+
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
@@ -207,3 +281,10 @@ MIT — see [LICENSE](LICENSE) for details.
 ---
 
 **Built with ❤️ for developers who want AI-assisted development done right.**
+
+## Sources
+
+- [Claude Code Skills Documentation](https://code.claude.com/docs/en/skills)
+- [SkillsMP Marketplace](https://skillsmp.com/)
+- [Agent Skills Standard](https://agentskills.io/specification)
+- [Anthropic Skills Repository](https://github.com/anthropics/skills)

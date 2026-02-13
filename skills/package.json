@@ -1,0 +1,67 @@
+{
+  "name": "yk-dev-pipeline-skills",
+  "version": "1.0.0",
+  "description": "6-phase JS/TS development pipeline for Claude Code - from brainstorm to documentation",
+  "keywords": [
+    "claude-skill",
+    "claude-code",
+    "anthropic",
+    "agent-skills",
+    "typescript",
+    "javascript",
+    "development-pipeline",
+    "code-review",
+    "testing",
+    "documentation"
+  ],
+  "author": "Yevhen Kondratyev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ykondrat/yk-dev-pipeline-skills.git"
+  },
+  "skills": [
+    {
+      "name": "yk-dev-pipeline",
+      "path": "SKILL.md",
+      "description": "Full 6-phase development pipeline router",
+      "phase": "all"
+    },
+    {
+      "name": "yk-brainstorm",
+      "path": "brainstorm/SKILL.md",
+      "description": "Deep-dive requirements gathering",
+      "phase": 1
+    },
+    {
+      "name": "yk-planning",
+      "path": "planning/SKILL.md",
+      "description": "Task breakdown and architecture planning",
+      "phase": 2
+    },
+    {
+      "name": "yk-implementation",
+      "path": "implementation/SKILL.md",
+      "description": "Code execution with quality gates",
+      "phase": 3
+    },
+    {
+      "name": "yk-code-review",
+      "path": "code-review/SKILL.md",
+      "description": "18-area comprehensive code review",
+      "phase": 4
+    },
+    {
+      "name": "yk-testing",
+      "path": "testing/SKILL.md",
+      "description": "Comprehensive test generation",
+      "phase": 5
+    },
+    {
+      "name": "yk-documentation",
+      "path": "documentation/SKILL.md",
+      "description": "Full project documentation generation",
+      "phase": 6
+    }
+  ]
+}
