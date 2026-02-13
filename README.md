@@ -15,10 +15,10 @@ A collection of **Claude AI skills** (structured instruction files) that guide C
 ## Features
 
 - 🧠 **Brainstorm** — Deep-dive requirements gathering with conversational questioning
-- 📋 **Planning** — Task breakdown with dependencies, acceptance criteria, and file structure
+- 📋 **Planning** — Task breakdown with dependencies, acceptance criteria, file structure, and archived plans in `docs/plans/`
 - ⚡ **Implementation** — Batch execution with quality gates, tech stack detection, and self-review
 - 🔍 **Code Review** — 18-area strict review with 4-level severity and actionable fix plans
-- 🧪 **Testing** — 5 test types, >80% coverage target, auto-detect runner, generate-run-fix loop
+- 🧪 **Testing** — 5 test types, >80% coverage target, auto-detect runner, generate-run-fix loop, failure recovery (skip or loop back to implementation)
 - 📝 **Documentation** — 7 doc types generated from actual code (README, API, architecture, deployment, etc.)
 
 ### Bonus: Reference Materials
@@ -127,18 +127,23 @@ After installation, just say: **"Build me a REST API for a task management app"*
 │  Brainstorm  │────▶│ Planning │────▶│ Implementation │
 │              │     │          │     │                │
 │  spec.md     │     │ plan.md  │     │  working code  │
+│  design doc  │     │ archived │     │                │
 └─────────────┘     └──────────┘     └───────┬────────┘
                                               │
                                               ▼
-┌─────────────┐     ┌──────────┐     ┌────────────────┐
-│Documentation │◀────│ Testing  │◀────│  Code Review   │
-│              │     │          │     │                │
-│ README, docs │     │ tests,   │     │ review.md      │
-│ API, deploy  │     │ coverage │     │ fix-plan.md    │
-└─────────────┘     └──────────┘     └────────┬───────┘
-                                              │
-                                     (if blocked, loops back
-                                      to Implementation)
+┌─────────────┐     ┌────────────────┐     ┌────────────────┐
+│Documentation │◀────│    Testing     │◀────│  Code Review   │
+│              │     │                │     │                │
+│ README, docs │     │ test-report.md │     │ review.md      │
+│ API, deploy  │     │ fix-test-plan  │     │ fix-plan.md    │
+└─────────────┘     └───────┬────────┘     └────────┬───────┘
+                          │                    │
+                          │           (if blocked, loops back
+                          │            to Implementation)
+                          │
+                 (if tests keep failing,
+                  user chooses: skip or
+                  loop back to Implementation)
 ```
 
 Each phase:
@@ -152,10 +157,10 @@ Each phase:
 | Phase | Skill | What It Does | Output |
 |-------|-------|-------------|--------|
 | 1 | [Brainstorm](skills/brainstorm/SKILL.md) | Requirements gathering, approach exploration | `spec.md`, design doc |
-| 2 | [Planning](skills/planning/SKILL.md) | Task breakdown, dependency graph | `plan.md` |
+| 2 | [Planning](skills/planning/SKILL.md) | Task breakdown, dependency graph | `plan.md`, `docs/plans/*-plan.md` |
 | 3 | [Implementation](skills/implementation/SKILL.md) | Code writing with quality gates | Working code |
 | 4 | [Code Review](skills/code-review/SKILL.md) | 18-area strict review | `review.md`, `fix-plan.md` |
-| 5 | [Testing](skills/testing/SKILL.md) | Comprehensive test generation | Tests, `test-report.md` |
+| 5 | [Testing](skills/testing/SKILL.md) | Comprehensive test generation | Tests, `test-report.md`, `fix-test-plan.md` (if blocked) |
 | 6 | [Documentation](skills/documentation/SKILL.md) | Full project documentation | README, API docs, etc. |
 
 ## Example Usage
@@ -164,12 +169,16 @@ Each phase:
 ```
 You: "Build me a URL shortener with analytics"
 Claude: [Brainstorm] Asks about requirements, proposes approaches → spec.md
-Claude: [Planning] Breaks into 15 tasks with dependencies → plan.md
+Claude: [Planning] Breaks into 15 tasks with dependencies → plan.md + docs/plans/
 Claude: [Implementation] Implements in batches, quality gates after each
 Claude: [Code Review] Reviews across 18 areas, finds 2 major issues → fix-plan.md
 Claude: [Implementation] Fixes the 2 issues
 Claude: [Code Review] Re-reviews (diff mode) → approved
-Claude: [Testing] Writes 47 tests, 89% coverage → test-report.md
+Claude: [Testing] Writes 47 tests, 2 keep failing → asks: skip or fix?
+You: "Go back and fix"
+Claude: [Testing] Generates fix-test-plan.md with actionable fixes
+Claude: [Implementation] Reads fix-test-plan.md, fixes the 2 issues
+Claude: [Testing] Re-runs → 47 tests passing, 89% coverage → test-report.md
 Claude: [Documentation] Generates README, API docs, deployment guide
 ```
 
@@ -233,7 +242,7 @@ Claude AI skills are markdown files with structured instructions. When Claude re
 
 1. **Progressive loading** — Claude reads only the skills it needs for the current phase, not everything at once
 2. **Reference on demand** — Deep checklists and best practices are in separate files, loaded when needed
-3. **Artifact chaining** — Each phase produces files (spec.md, plan.md, etc.) that the next phase reads
+3. **Artifact chaining** — Each phase produces files (spec.md, plan.md, etc.) that the next phase reads. Plans and design docs are also archived in `docs/plans/` with date prefixes
 4. **State tracking** — `pipeline-state.json` tracks progress across phases
 5. **Human in the loop** — Claude suggests the next phase, but waits for user confirmation
 

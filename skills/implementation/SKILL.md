@@ -4,9 +4,10 @@ description: >
   Executes implementation plans task by task for JS/TS projects. You MUST use this after
   planning and before code review. Reads plan.md and works through tasks in batches with
   review checkpoints, quality gates, and self-review — writing production-quality code.
-  Triggers on: "implement this", "start coding", "build it", "implementation phase",
-  "execute the plan", "start building", "next step" (after planning), or when
-  pipeline-state.json shows planning is complete and implementation is pending.
+  Also reads fix-plan.md (from code review) and fix-test-plan.md (from testing) when
+  looping back to fix issues. Triggers on: "implement this", "start coding", "build it",
+  "implementation phase", "execute the plan", "start building", "next step" (after planning),
+  or when pipeline-state.json shows planning is complete and implementation is pending.
   Also use when the user has a plan.md and wants to start writing code.
 metadata:
   recommended_model: opus
@@ -27,7 +28,7 @@ brainstorm → planning → [implementation] → code-review → testing → doc
                              ↑ you are here
 ```
 
-**Input:** `plan.md` (task breakdown), `spec.md` (requirements), optionally design docs.
+**Input:** `plan.md` (task breakdown), `spec.md` (requirements), optionally design docs, `fix-plan.md` (from code review), `fix-test-plan.md` (from testing).
 **Output:** Working code, installed dependencies, verified acceptance criteria, passing build.
 
 ---
@@ -61,8 +62,15 @@ Before writing a single line of code:
 - Read `plan.md` completely — every task, dependency, and acceptance criterion
 - Read `spec.md` — understand the requirements you're implementing
 - Read the design doc if it exists — understand architectural decisions
-- Read `pipeline-state.json` — confirm planning is complete
+- Read `fix-plan.md` if it exists — code review findings that need fixing
+- Read `fix-test-plan.md` if it exists — test failures that need production code changes
+- Read `pipeline-state.json` — confirm planning is complete (or check if returning from code-review/testing)
 - Examine any existing project files
+
+**Determine the mode:**
+- **Fresh implementation** — `plan.md` exists, no fix files → execute the full plan
+- **Code review fixes** — `fix-plan.md` exists → focus on fixes from code review, skip completed tasks
+- **Test failure fixes** — `fix-test-plan.md` exists → focus on fixes from testing, follow the fix plan exactly
 
 **Then review the plan critically.** Don't just accept it — challenge it:
 

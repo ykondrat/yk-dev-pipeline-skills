@@ -26,7 +26,7 @@ brainstorm → [planning] → implementation → code-review → testing → doc
 ```
 
 **Input:** `spec.md` and optionally `docs/plans/*-design.md` from the brainstorm phase.
-**Output:** `plan.md` — a detailed implementation plan with tasks, file structure, and dependencies.
+**Output:** `plan.md` (project root) + `docs/plans/YYYY-MM-DD-{topic}-plan.md` (archived copy) — a detailed implementation plan with tasks, file structure, and dependencies.
 
 ---
 
@@ -144,7 +144,13 @@ Don't generate the full plan document until all phases are validated.
 
 ### Step 6: Generate the Plan Document
 
-Once validated, write `{project-dir}/plan.md`:
+Once validated, write the plan to two locations:
+1. `{project-dir}/plan.md` — the active plan that implementation reads
+2. `{project-dir}/docs/plans/YYYY-MM-DD-{topic}-plan.md` — archived copy for history
+
+Create the `docs/plans/` directory if it doesn't exist.
+
+**plan.md format:**
 
 ```markdown
 # {Project Name} — Implementation Plan
@@ -213,7 +219,7 @@ Update `pipeline-state.json`:
     "planning": {
       "status": "completed",
       "completed_at": "{ISO timestamp}",
-      "outputs": ["plan.md"],
+      "outputs": ["plan.md", "docs/plans/YYYY-MM-DD-{topic}-plan.md"],
       "task_count": {N},
       "phase_count": {N}
     },

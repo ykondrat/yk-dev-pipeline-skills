@@ -36,21 +36,52 @@ and TypeDoc config.
 
 ## The Process
 
-### Step 1: Load Context
+### Step 1: Scope and Audience
 
-Read everything — you need the full picture:
+Before generating anything, clarify the documentation scope:
 
-- All source files (understand what the project does)
+- **Audience?** New team members, external developers, architects, non-technical stakeholders?
+- **Existing docs?** Check for existing documentation to update rather than duplicate
+
+If running as part of the full pipeline, the audience is typically "developers who will
+maintain and extend this codebase." Adjust depth and terminology accordingly.
+
+### Step 2: Research the Codebase
+
+Don't just "read everything" — research systematically. Cover these dimensions:
+
+| Dimension | What to Find |
+|-----------|-------------|
+| **Entry points** | Where does execution start? HTTP handlers, CLI commands, event listeners |
+| **Data models** | Types, schemas, database tables, DTOs, domain entities |
+| **Data flows** | How data moves: input → validation → processing → storage → output |
+| **Dependencies** | External services, libraries, APIs, databases, message queues |
+| **Configuration** | Environment variables, config files, feature flags |
+| **Error handling** | Error types, recovery strategies, fallback behavior |
+| **Security** | Auth/authz, input validation, encryption, access control |
+| **Testing** | Test coverage, test types, key test scenarios |
+
+**Research approach:**
+1. Start from entry points (routes, handlers, exports) and trace inward
+2. Map the dependency graph — what calls what
+3. Read tests to understand intended behavior and edge cases
+4. Check git history for recent changes and design decisions (`git log --oneline -20`)
+5. Look for existing comments, ADRs, and inline documentation
+
+**Critical rules:**
+- Read every file you reference — never guess content from file names
+- Trace data flows end-to-end, don't stop at abstraction boundaries
+- Record exact file paths and line numbers for every finding: `src/auth/middleware.ts:42-67`
+
+Also load pipeline artifacts:
 - `spec.md` — original requirements and user stories
 - `plan.md` — architecture decisions and task structure
 - `review.md` — any caveats or known limitations
 - `test-report.md` — what's tested, coverage numbers
 - `pipeline-state.json` — deviations, cross-step impacts
 - `package.json` — name, version, dependencies, scripts
-- `tsconfig.json` — build configuration
-- Existing docs (don't overwrite meaningful existing documentation)
 
-### Step 2: Detect Project Type
+### Step 3: Detect Project Type
 
 The documentation format depends on what the project is:
 
@@ -70,10 +101,13 @@ grep -r "commander\|yargs\|clipanion" package.json
 | **Full-Stack App** | Frontend + backend dirs | Architecture, setup, both API + UI docs |
 | **Monorepo** | workspaces, multiple packages | Per-package docs + root overview |
 
-### Step 3: Generate Documentation
+### Step 4: Generate Documentation
 
 Generate all applicable docs in this order. Each doc type has a template below —
 adapt it to the project, don't force sections that don't apply.
+
+**Write in sections of 200-400 words.** After each major doc, validate with the user
+before continuing to the next. Don't dump all documentation at once.
 
 ---
 
@@ -277,14 +311,33 @@ Create a new user.
 
 ## Doc 3: Architecture Documentation
 
-Generate `docs/architecture.md`:
+Generate `docs/architecture.md`. This doc must include **Mermaid diagrams** — a good
+diagram replaces paragraphs of explanation. Every architectural claim must include a
+file path reference (e.g., `src/api/middleware/auth.ts:42-67`).
 
 ```markdown
 # Architecture
 
+> Last updated: {date} | Commit: {short hash from `git rev-parse --short HEAD`}
+
 ## Overview
 {High-level description of the system architecture. Derived from spec.md design
 decisions and actual code structure.}
+
+## System Diagram
+
+{Component diagram showing system structure. Use Mermaid:}
+
+```mermaid
+graph TD
+    Client[Client] --> API[API Layer]
+    API --> Auth[Auth Middleware]
+    Auth --> Routes[Route Handlers]
+    Routes --> Services[Service Layer]
+    Services --> Repos[Repository Layer]
+    Repos --> DB[(Database)]
+    Services --> Cache[(Cache)]
+```
 
 ## Project Structure
 ```
@@ -300,29 +353,71 @@ src/
 
 ## Architecture Decisions
 
-{Key decisions made during brainstorm/planning and how they're reflected in code.}
+{Key decisions made during brainstorm/planning and how they're reflected in code.
+Check git blame for context on non-obvious decisions.}
 
 ### {Decision 1: e.g., "Layered Architecture"}
 **Decision:** {what was decided}
 **Rationale:** {why — from design doc}
-**Implementation:** {how it's reflected in code structure}
+**Implementation:** {how it's reflected in code structure, with file references}
 
 ### {Decision 2: e.g., "PostgreSQL over MongoDB"}
 ...
 
-## Data Flow
-{How a request flows through the system — from HTTP to response.
-Trace an actual endpoint through the layers.}
+## Data Flow — Sequence Diagram
 
-1. Request arrives at `src/api/routes/user.routes.ts`
-2. Middleware validates auth (`src/api/middleware/auth.ts`)
-3. Handler calls service (`src/domain/user/user.service.ts`)
-4. Service calls repository (`src/domain/user/user.repository.ts`)
-5. Repository executes query (`src/infrastructure/database/...`)
+{Trace an actual endpoint end-to-end. Include file:line references.
+Use a Mermaid sequence diagram:}
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant M as Auth Middleware
+    participant R as Route Handler
+    participant S as Service
+    participant D as Database
+
+    C->>M: HTTP Request
+    M->>M: Validate token
+    M->>R: Authenticated request
+    R->>R: Validate input
+    R->>S: Call service
+    S->>D: Query
+    D-->>S: Result
+    S-->>R: Domain response
+    R-->>C: HTTP Response
+```
+
+**Step-by-step with file references:**
+1. Request arrives at `src/api/routes/user.routes.ts:15`
+2. Middleware validates auth (`src/api/middleware/auth.ts:42-67`)
+3. Handler calls service (`src/domain/user/user.service.ts:23`)
+4. Service calls repository (`src/domain/user/user.repository.ts:31`)
+5. Repository executes query (`src/infrastructure/database/queries.ts:18`)
 6. Response serialized and returned
 
 ## Database Schema
-{If database exists — ER diagram or table descriptions from actual schema/migrations.}
+
+{If database exists — use a Mermaid ER diagram derived from actual
+schema/migrations:}
+
+```mermaid
+erDiagram
+    USER ||--o{ POST : creates
+    USER {
+        uuid id PK
+        string email UK
+        string name
+        timestamp created_at
+    }
+    POST {
+        uuid id PK
+        uuid author_id FK
+        string title
+        text content
+        timestamp created_at
+    }
+```
 
 ## External Dependencies
 {External services, APIs, databases the system connects to.}
@@ -334,7 +429,15 @@ Trace an actual endpoint through the layers.}
 
 ## Security Model
 {How authentication and authorization work. Derived from actual middleware and
-auth implementation.}
+auth implementation. Include file references.}
+
+## Glossary
+{Domain-specific terms used in the codebase. Helps new team members
+understand the domain language.}
+
+| Term | Definition |
+|------|-----------|
+| {term} | {definition as used in this codebase} |
 ```
 
 ---

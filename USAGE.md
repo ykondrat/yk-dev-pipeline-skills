@@ -214,7 +214,7 @@ You: "Yes, proceed to planning"
 Claude: [Invokes yk-planning]
   → Reads spec.md and design doc
   → Breaks into 12 tasks with dependencies
-  → Generates plan.md
+  → Generates plan.md + archives to docs/plans/
 
 You: "Start implementing"
 
@@ -237,6 +237,8 @@ You: "Write tests"
 Claude: [Invokes yk-testing]
   → Writes unit, integration, e2e tests
   → Runs tests, fixes failures
+  → If tests keep failing after 2 attempts, asks:
+    "Skip failing tests or go back to implementation?"
   → Achieves >80% coverage
   → Generates test-report.md
 
@@ -296,6 +298,44 @@ Claude: [Re-invokes yk-code-review in diff mode]
   → Updates review.md
 ```
 
+### Workflow 3b: Test Failure Recovery
+
+```bash
+# Tests keep failing after fix attempts
+Claude: "3 tests are still failing after fix attempts.
+  What would you like to do?"
+  1. Go back to implementation
+  2. Skip failing tests
+  3. Keep trying
+
+# Option 1: Go back to implementation
+You: "Go back to implementation"
+
+Claude: [Generates fix-test-plan.md]
+  → Documents each failing test, root cause, and suggested fix
+  → Sets testing status to "blocked" in pipeline-state.json
+  → Hands off to implementation phase
+
+Claude: [Re-invokes yk-implementation]
+  → Reads fix-test-plan.md
+  → Fixes the underlying code issues
+  → Re-runs quality gates
+
+You: "Re-run tests"
+
+Claude: [Re-invokes yk-testing]
+  → Re-runs all tests including previously failing ones
+  → Generates updated test-report.md
+
+# Option 2: Skip failing tests
+You: "Skip them"
+
+Claude: [Marks failing tests as .todo('reason')]
+  → Documents skipped tests in test-report.md
+  → Continues with coverage report
+  → Proceeds to documentation
+```
+
 ### Workflow 4: Pipeline State Management
 
 ```bash
@@ -304,7 +344,7 @@ You: "Where are we in the pipeline?"
 
 Claude: "Currently in implementation phase. Completed:
   ✓ Brainstorm (spec.md, design doc)
-  ✓ Planning (plan.md, 15 tasks)
+  ✓ Planning (plan.md + docs/plans/, 15 tasks)
   ⏳ Implementation (9/15 tasks complete)
   ⏸ Code Review (pending)
   ⏸ Testing (pending)
@@ -392,7 +432,7 @@ The pipeline creates `pipeline-state.json` at your project root:
     "planning": {
       "status": "completed",
       "completed_at": "2026-02-13T11:00:00Z",
-      "outputs": ["plan.md"],
+      "outputs": ["plan.md", "docs/plans/2026-02-13-blog-api-plan.md"],
       "task_count": 15,
       "phase_count": 4
     },
@@ -410,7 +450,7 @@ The pipeline creates `pipeline-state.json` at your project root:
       }
     },
     "code-review": { "status": "pending" },
-    "testing": { "status": "pending" },
+    "testing": { "status": "pending" },  // can also be "blocked" if tests need implementation fixes
     "documentation": { "status": "pending" }
   }
 }
@@ -431,8 +471,9 @@ This file helps Claude:
 3. **Don't Skip Phases**: Each phase builds on the previous one's outputs
 4. **Use Quality Gates**: Let implementation run all checks after each batch
 5. **Fix Review Issues**: Don't proceed to testing until code review approves
-6. **Be Specific**: The more context you provide, the better the results
-7. **Read the Outputs**: Check spec.md, plan.md, review.md - they guide the next phase
+6. **Handle Test Failures**: If tests keep failing, choose "go back to implementation" to fix root causes rather than skipping
+7. **Be Specific**: The more context you provide, the better the results
+8. **Read the Outputs**: Check spec.md, plan.md, review.md - they guide the next phase
 
 ---
 
@@ -468,7 +509,7 @@ You: "Build an e-commerce API with products, cart, and checkout"
 
 [Full pipeline runs]
 ├─ Brainstorm: Explores payment methods, inventory, user auth
-├─ Planning: 23 tasks across 5 phases
+├─ Planning: 23 tasks across 5 phases → plan.md + docs/plans/
 ├─ Implementation: Builds API with Stripe integration
 ├─ Code Review: Finds 1 critical security issue, 3 major issues
 ├─ Implementation (fixes): Resolves all issues
