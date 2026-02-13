@@ -1,0 +1,76 @@
+# Contributing to Dev Pipeline Skills
+
+Thanks for your interest in contributing! This project is a collection of Claude AI skills
+for software development, and we welcome contributions from the community.
+
+## How to Contribute
+
+### Improving Existing Skills
+
+1. Fork the repository
+2. Edit the relevant SKILL.md or reference file
+3. Test your changes by uploading to a Claude conversation and running through the workflow
+4. Submit a PR with a clear description of what changed and why
+
+### Adding New Reference Materials
+
+We'd love to expand coverage to more frameworks and languages:
+
+- **Frontend frameworks**: React, Vue, Angular, Svelte, Next.js, Nuxt
+- **Backend frameworks**: NestJS, Fastify patterns, tRPC
+- **Languages**: Python, Go, Rust, Java adaptations
+- **Infrastructure**: Docker, Kubernetes, Terraform, CI/CD patterns
+- **Specialized areas**: GraphQL, WebSockets, microservices, event sourcing
+
+To add a reference:
+1. Create a new `.md` file in the appropriate `references/` directory
+2. Follow the same structure as existing references (rationale + examples + severity tables)
+3. Update the parent SKILL.md to reference the new file
+
+### Adding New Review Checklist Areas
+
+1. Add the checklist to `skills/code-review/references/review-checklists.md`
+2. Add a summary entry in `skills/code-review/SKILL.md` under Review Areas
+3. Include severity guidance with the standard emoji levels (🔴🟡🔵⚪)
+
+### Reporting Issues
+
+- **Inaccurate advice**: If a best practice is wrong or outdated, open an issue
+- **Missing coverage**: If an important area isn't covered, suggest it
+- **Unclear instructions**: If a skill's process is confusing, let us know
+
+## Guidelines
+
+### Skill Writing Style
+
+- **Be specific** — "Check for X" is better than "Review for quality"
+- **Show examples** — code snippets for patterns to flag and correct alternatives
+- **Explain rationale** — "Why" matters more than "What"
+- **Include severity guidance** — help Claude categorize findings correctly
+- **Test with Claude** — verify your skill works by actually using it in a conversation
+
+### File Format
+
+- All skills use YAML frontmatter (name, description)
+- Markdown with clear section headers
+- Code examples in fenced blocks with language tags
+- Tables for severity guidance and common patterns
+
+### Keep It Lean
+
+- SKILL.md files should stay under ~500 lines (use reference files for depth)
+- Reference files can be longer but should be well-organized with a table of contents
+- Don't duplicate content between skills — link to references instead
+
+## Testing Your Changes
+
+Since these are instruction files, not code, testing means:
+
+1. Upload the modified skill to a Claude conversation
+2. Give Claude a realistic task that exercises the skill
+3. Verify Claude follows the instructions correctly
+4. Check that the output matches what the skill describes
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.
