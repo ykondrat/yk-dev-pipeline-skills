@@ -14,7 +14,7 @@ This guide shows you how to use the skills in different environments and scenari
 ## Using in Claude Code (CLI)
 
 ### Installation
-
+https://github.com/ykondrat/yk-dev-pipeline-skills.git
 #### Method 1: Using `/plugin` Command (Recommended)
 
 ```bash
