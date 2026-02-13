@@ -51,10 +51,13 @@ To add a reference:
 
 ### File Format
 
-- All skills use YAML frontmatter (name, description)
+- All skills use YAML frontmatter (`name`, `description`, `metadata`)
+- Skill names use the `yk-` prefix (e.g., `yk-brainstorm`, `yk-implementation`)
+- `metadata.recommended_model` specifies the optimal model (opus, sonnet, or haiku)
 - Markdown with clear section headers
 - Code examples in fenced blocks with language tags
 - Tables for severity guidance and common patterns
+- Reference file paths use skill-root-relative paths (e.g., `implementation/references/js-ts-best-practices.md`)
 
 ### Keep It Lean
 

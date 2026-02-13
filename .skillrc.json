@@ -5,6 +5,7 @@
   "description": "Complete 6-phase JS/TS development pipeline for Claude Code",
   "author": "Yevhen Kondratyev",
   "license": "MIT",
+  "repository": "https://github.com/ykondrat/yk-dev-pipeline-skills",
   "compatibility": {
     "claude-code": ">=1.0.0",
     "platforms": ["darwin", "linux", "win32"]

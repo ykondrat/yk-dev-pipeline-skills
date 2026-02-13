@@ -57,7 +57,7 @@ If no project exists yet, that's fine — note it and move on to questions.
 **One question per message. No exceptions.** If a topic needs more exploration, break it
 into multiple questions across multiple messages.
 
-Prefer multiple-choice questions when possible (use the `ask_user_input` tool for discrete
+Prefer multiple-choice questions when possible (use the `AskUserQuestion` tool for discrete
 choices). Open-ended questions are fine when the answer space is too broad for options.
 
 Adapt the question flow based on what you already know from Step 1 and from previous

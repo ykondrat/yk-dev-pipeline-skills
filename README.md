@@ -31,7 +31,82 @@ A collection of **Claude AI skills** (structured instruction files) that guide C
 
 ## Installation
 
-### Option 1: Install from Marketplace (Coming Soon)
+### Claude Code (CLI)
+
+#### Method 1: Using `/plugin` Command (Recommended)
+
+```bash
+# In Claude Code CLI
+/plugin install ykondrat/yk-dev-pipeline-skills
+
+# Or install from a specific branch
+/plugin install ykondrat/yk-dev-pipeline-skills@main
+
+# Or install from local directory
+/plugin install /path/to/dev-pipeline-skills
+```
+
+After installation, restart Claude Code to apply changes.
+
+**Verify installation:**
+```bash
+/plugin list
+```
+
+**Uninstall:**
+```bash
+/plugin uninstall yk-dev-pipeline-skills
+```
+
+#### Method 2: Manual Installation
+
+```bash
+# Option 1: Install globally (for all projects)
+git clone https://github.com/ykondrat/yk-dev-pipeline-skills.git
+cp -r yk-dev-pipeline-skills/skills ~/.claude/skills/yk-dev-pipeline
+
+# Option 2: Install per-project
+cp -r yk-dev-pipeline-skills/skills /path/to/your/project/.claude/skills/yk-dev-pipeline
+```
+
+#### Method 3: Direct Download
+
+1. Download this repository as ZIP
+2. Extract to `~/.claude/skills/yk-dev-pipeline/`
+3. Restart Claude Code
+
+### Claude.ai Projects
+
+1. Go to [claude.ai](https://claude.ai) → **Projects** → **Create Project**
+2. Click **Add Knowledge** → upload the `skills/` folder contents
+3. Add this to **Project Instructions**:
+
+```
+You have access to the YK Dev Pipeline skills in your project knowledge.
+
+Available skills:
+- yk-dev-pipeline (router - start here)
+- yk-brainstorm (Phase 1: Requirements)
+- yk-planning (Phase 2: Task breakdown)
+- yk-implementation (Phase 3: Code writing)
+- yk-code-review (Phase 4: Review)
+- yk-testing (Phase 5: Tests)
+- yk-documentation (Phase 6: Docs)
+
+When I request development work, read the appropriate SKILL.md file and follow
+its instructions. Start with skills/SKILL.md to understand the pipeline.
+
+Always read reference files when the skill instructs you to.
+```
+
+### Claude.ai Chat (One-time Use)
+
+1. Download this repository as ZIP
+2. Start a new conversation at [claude.ai](https://claude.ai)
+3. Drag the ZIP into the chat
+4. Say: **"Read skills/SKILL.md and help me build [your project]"**
+
+### Marketplace (Coming Soon)
 
 Once indexed by SkillsMP or SkillHub (usually within 48 hours of publishing):
 
@@ -39,83 +114,11 @@ Once indexed by SkillsMP or SkillHub (usually within 48 hours of publishing):
 2. Click "Install"
 3. Skills will be automatically added to your Claude Code
 
-### Option 2: Claude Code `/plugin` Command (Recommended)
-
-```bash
-# In Claude Code CLI
-/plugin install ykondrat/yk-dev-pipeline-skills
-
-# Restart Claude Code to apply changes
-```
-
-### Option 3: Manual Installation via Git
-
-```bash
-# Clone the repository
-git clone https://github.com/ykondrat/yk-dev-pipeline-skills.git
-
-# Copy skills to your Claude Code skills directory
-cp -r yk-dev-pipeline-skills/skills ~/.claude/skills/yk-dev-pipeline
-
-# Or for a specific project
-cp -r yk-dev-pipeline-skills/skills /path/to/your/project/.claude/skills/yk-dev-pipeline
-```
-
-### Option 4: Direct Download
-
-1. Download this repository as ZIP
-2. Extract to `~/.claude/skills/yk-dev-pipeline/`
-3. Restart Claude Code
-
-After installation, verify with:
-```bash
-/plugin list
-```
-
 ## Quick Start
 
 📖 **[Read the complete USAGE.md guide](USAGE.md)** for detailed instructions, workflows, and examples.
 
-### Option 1: Claude Project (Recommended)
-
-1. Go to [claude.ai](https://claude.ai) → **Projects** → **Create Project**
-2. Click **Add Knowledge** → upload the `skills/` folder contents
-3. Add this to **Project Instructions**:
-
-```
-You have access to a 6-phase JS/TS development pipeline in your project knowledge.
-When I want to build, review, test, or document a JS/TS project, read the
-appropriate SKILL.md file from the skills folder and follow its instructions.
-
-Start with skills/SKILL.md (the router) to understand the full pipeline,
-then read the specific phase's SKILL.md when entering that phase.
-
-Always read the skill file before starting work. Always read reference files when
-the skill tells you to.
-```
-
-4. Start a conversation: **"Build me a REST API for a task management app"**
-
-### Option 2: Upload Per Chat
-
-1. Download this repo as a ZIP
-2. Start a new conversation at [claude.ai](https://claude.ai)
-3. Drag the ZIP into the chat
-4. Say: **"Read skills/SKILL.md and let's start building a [your project]"**
-
-### Option 3: Claude Code
-
-Add to your project's `CLAUDE.md`:
-
-```markdown
-## Development Pipeline
-
-This project uses a 6-phase development pipeline. Skills are in `.claude/skills/`.
-When working on this project, read `.claude/skills/SKILL.md` for the pipeline overview
-and follow the appropriate phase's skill for each task.
-```
-
-Then copy the `skills/` folder to `.claude/skills/` in your repo.
+After installation, just say: **"Build me a REST API for a task management app"** — Claude will start the pipeline automatically.
 
 ## Pipeline Flow
 

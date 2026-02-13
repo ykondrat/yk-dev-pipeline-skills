@@ -7,6 +7,8 @@ description: >
   step, user confirms. Triggers on: "start a new project", "build me a...", "let's develop...",
   "new feature", "start pipeline", or any request to build a JS/TS application or feature
   from scratch.
+metadata:
+  recommended_model: sonnet
 ---
 
 # JS/TS Development Pipeline
@@ -33,7 +35,7 @@ When the user wants to build something, start at Phase 1 (Brainstorm). Read the
 brainstorm skill and follow its process:
 
 ```
-Read dev-pipeline/brainstorm/SKILL.md
+Read brainstorm/SKILL.md
 ```
 
 ### Continuing the Pipeline
@@ -43,26 +45,26 @@ When moving to the next phase, read that phase's skill:
 
 ```
 Phase 1 complete → "Ready for planning? I'll break this into tasks."
-  Read dev-pipeline/planning/SKILL.md
+  Read planning/SKILL.md
 
 Phase 2 complete → "Ready to start implementing? I'll work through the tasks."
-  Read dev-pipeline/implementation/SKILL.md
-  Read dev-pipeline/implementation/references/js-ts-best-practices.md
-  Read dev-pipeline/implementation/references/databases-*.md (if applicable)
+  Read implementation/SKILL.md
+  Read implementation/references/js-ts-best-practices.md
+  Read implementation/references/databases-*.md (if applicable)
 
 Phase 3 complete → "Ready for code review? I'll review everything."
-  Read dev-pipeline/code-review/SKILL.md
-  Read dev-pipeline/code-review/references/review-checklists.md
+  Read code-review/SKILL.md
+  Read code-review/references/review-checklists.md
 
 Phase 4 complete (approved) → "Ready for testing? I'll write comprehensive tests."
-  Read dev-pipeline/testing/SKILL.md
+  Read testing/SKILL.md
 
 Phase 4 complete (blocked) → "Issues found. I'll fix them and re-review."
-  Read dev-pipeline/implementation/SKILL.md (to execute fix-plan.md)
-  Then re-read dev-pipeline/code-review/SKILL.md (diff review)
+  Read implementation/SKILL.md (to execute fix-plan.md)
+  Then re-read code-review/SKILL.md (diff review)
 
 Phase 5 complete → "Ready for documentation? I'll generate all project docs."
-  Read dev-pipeline/documentation/SKILL.md
+  Read documentation/SKILL.md
 
 Phase 6 complete → "Pipeline complete! Project is built, reviewed, tested, and documented."
 ```
@@ -84,8 +86,8 @@ the pipeline is and what's been completed:
 
 ```json
 {
-  "project": "{project name}",
-  "started_at": "{ISO}",
+  "project_name": "{project name}",
+  "created_at": "{ISO}",
   "current_phase": "implementation",
   "phases": {
     "brainstorm": { "status": "completed", "outputs": ["spec.md", "docs/plans/..."] },
@@ -101,44 +103,44 @@ the pipeline is and what's been completed:
 ## Phase Summary
 
 ### Phase 1: Brainstorm
-**Skill:** `dev-pipeline/brainstorm/SKILL.md`
+**Skill:** `brainstorm/SKILL.md`
 **Purpose:** Deep-dive into requirements through conversational questioning.
 **Output:** `spec.md` (concise summary) + detailed design doc
 **Key:** One question at a time, checks existing project context first, proposes approaches with trade-offs, YAGNI ruthlessly.
 
 ### Phase 2: Planning
-**Skill:** `dev-pipeline/planning/SKILL.md`
+**Skill:** `planning/SKILL.md`
 **Purpose:** Break the spec into an ordered task list with dependencies and acceptance criteria.
 **Output:** `plan.md` with task dependency graph
 **Key:** Every task has files to create, dependencies, acceptance criteria. Tasks grouped into phases.
 
 ### Phase 3: Implementation
-**Skill:** `dev-pipeline/implementation/SKILL.md`
+**Skill:** `implementation/SKILL.md`
 **References:**
-- `dev-pipeline/implementation/references/js-ts-best-practices.md`
-- `dev-pipeline/implementation/references/databases-sql.md`
-- `dev-pipeline/implementation/references/databases-nosql.md`
-- `dev-pipeline/implementation/references/databases-redis.md`
+- `implementation/references/js-ts-best-practices.md`
+- `implementation/references/databases-sql.md`
+- `implementation/references/databases-nosql.md`
+- `implementation/references/databases-redis.md`
 
 **Purpose:** Execute the plan — write code, install deps, verify acceptance criteria.
 **Output:** Working code, passing builds
 **Key:** Critical plan review before coding, tech stack detection, batch execution (3 tasks per batch), quality gate after every batch (types + build + lint + tests), hard STOP on blockers.
 
 ### Phase 4: Code Review
-**Skill:** `dev-pipeline/code-review/SKILL.md`
-**Reference:** `dev-pipeline/code-review/references/review-checklists.md`
+**Skill:** `code-review/SKILL.md`
+**Reference:** `code-review/references/review-checklists.md`
 **Purpose:** Strict review across 18 areas — find every issue.
 **Output:** `review.md` + `fix-plan.md`
 **Key:** 4-level verdict (Block / Request Changes / Approve+suggestions / Approve). If blocked, loops back to implementation. Diff mode for re-reviews.
 
 ### Phase 5: Testing
-**Skill:** `dev-pipeline/testing/SKILL.md`
+**Skill:** `testing/SKILL.md`
 **Purpose:** Write comprehensive tests — unit, integration, e2e, edge cases, benchmarks.
 **Output:** Test files + `test-report.md`
 **Key:** Auto-detect test runner (default Vitest), >80% coverage target, generate-run-fix loop, production bugs documented.
 
 ### Phase 6: Documentation
-**Skill:** `dev-pipeline/documentation/SKILL.md`
+**Skill:** `documentation/SKILL.md`
 **Purpose:** Generate all project documentation from actual code.
 **Output:** README.md, API docs, architecture, contributing, changelog, deployment guide
 **Key:** Every statement verified against code. Adapts format to project type. No aspirational docs.

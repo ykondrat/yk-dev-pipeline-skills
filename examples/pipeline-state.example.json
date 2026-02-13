@@ -1,6 +1,6 @@
 {
-  "project": "url-shortener-api",
-  "started_at": "2026-02-11T10:00:00Z",
+  "project_name": "url-shortener-api",
+  "created_at": "2026-02-11T10:00:00Z",
   "current_phase": "testing",
   "phases": {
     "brainstorm": {

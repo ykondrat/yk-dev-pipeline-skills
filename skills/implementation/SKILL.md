@@ -34,13 +34,14 @@ brainstorm → planning → [implementation] → code-review → testing → doc
 
 ## References
 
-Before writing any code, read the relevant best practices references:
+Before writing any code, read the relevant best practices references
+(paths relative to the skills root):
 
 ```
-Read references/js-ts-best-practices.md          # Always read this
-Read references/databases-sql.md                  # If using PostgreSQL or MySQL
-Read references/databases-nosql.md                # If using MongoDB or DynamoDB
-Read references/databases-redis.md                # If using Redis for caching/queues/sessions
+Read implementation/references/js-ts-best-practices.md    # Always read this
+Read implementation/references/databases-sql.md            # If using PostgreSQL or MySQL
+Read implementation/references/databases-nosql.md          # If using MongoDB or DynamoDB
+Read implementation/references/databases-redis.md          # If using Redis for caching/queues/sessions
 ```
 
 The JS/TS reference covers TypeScript patterns, Node.js patterns, modern JavaScript, security,

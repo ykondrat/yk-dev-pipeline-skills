@@ -28,9 +28,10 @@ comprehensive review report and prioritized fix plan.
 
 ## References
 
-**Before reviewing, load the detailed checklists:**
+**Before reviewing, load the detailed checklists
+(path relative to the skills root):**
 ```
-Read references/review-checklists.md
+Read code-review/references/review-checklists.md
 ```
 This file contains deep, per-area checklists with examples and severity tables pulled from
 specialized security, performance, concurrency, API, database, logging, config, dependency,
@@ -77,7 +78,7 @@ Record results — these are automatic findings.
 ### Step 4: Review File by File
 Review order: types → config → domain logic → infrastructure → API layer → utilities → entry point.
 Check all applicable review areas per file. Load the detailed checklists from
-`references/review-checklists.md` for each area.
+`code-review/references/review-checklists.md` for each area.
 
 ### Step 5: Check Cross-Step Dependencies
 - Do changes modify contracts (types, APIs, schemas) that testing/documentation depend on?
