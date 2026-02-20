@@ -1,12 +1,9 @@
 {
-  "$schema": "https://claude.ai/schemas/plugin.json",
   "name": "yk-dev-pipeline",
-  "display_name": "YK Dev Pipeline",
-  "description": "Complete 6-phase JS/TS development pipeline: brainstorm, planning, implementation, code review, testing, and documentation. Each phase produces artifacts consumed by the next.",
   "version": "1.0.0",
+  "description": "Complete 6-phase JS/TS development pipeline: brainstorm, planning, implementation, code review, testing, and documentation. Each phase produces artifacts consumed by the next.",
   "author": {
-    "name": "Yevhen Kondratyev",
-    "github": "ykondrat"
+    "name": "Yevhen Kondratyev"
   },
   "skills": {
     "yk-dev-pipeline": {

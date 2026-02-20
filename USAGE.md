@@ -18,18 +18,9 @@ This guide shows you how to use the skills in different environments and scenari
 #### Method 1: Plugin Marketplace (Recommended)
 
 ```bash
-# Add the marketplace repo, then install the plugin
-/plugin marketplace add ykondrat/yk-dev-pipeline-skills
-/plugin install yk-dev-pipeline
-
-# Or install directly from the repo
-/plugin install ykondrat/yk-dev-pipeline-skills
-
-# Or install from a specific branch
-/plugin install ykondrat/yk-dev-pipeline-skills@main
-
-# Or install from a local directory
-/plugin install /path/to/yk-dev-pipeline-skills
+# Add the marketplace, then install the plugin
+/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git
+/plugin install yk-dev-pipeline@yk-dev-pipeline-skills
 ```
 
 After installation, restart Claude Code to apply changes.
@@ -487,7 +478,7 @@ This file helps Claude:
 ### "Skill not found"
 - **Claude Code**:
   - Run `/plugin list` to verify installation
-  - If not listed, reinstall with `/plugin marketplace add ykondrat/yk-dev-pipeline-skills` then `/plugin install yk-dev-pipeline`
+  - If not listed, reinstall with `/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git` then `/plugin install yk-dev-pipeline@yk-dev-pipeline-skills`
   - Restart Claude Code after installation
   - Alternatively, manually check `~/.claude/skills/yk-dev-pipeline/` exists
 - **Claude.ai**: Re-upload the skills folder to your project knowledge
