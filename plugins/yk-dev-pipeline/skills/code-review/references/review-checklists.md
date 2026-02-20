@@ -244,6 +244,183 @@ Each section includes what to check, common patterns to flag, and severity table
 
 ---
 
+## Area 8: YAGNI — Deep Checklist
+
+### Unused Code
+- Unused exports (exported but never imported elsewhere)
+- Unused function parameters (present in signature, never read)
+- Unused variables, constants, or type aliases
+- Dead code paths (conditions that can never be true)
+- Commented-out code blocks (should be deleted, not preserved)
+- Unused dependencies in `package.json` (installed but never imported)
+- Unused dev dependencies (listed but not referenced in scripts or config)
+
+### Over-Engineering
+- Abstractions with only one implementation (premature interface/factory)
+- Configuration options nobody sets (only defaults used)
+- Generic solutions for specific, one-off problems
+- Feature flags for features that are always on or always off
+- Wrapper classes that add no behavior (pass-through layers)
+- Utility files with a single function (inline instead)
+- Premature optimization without profiling evidence
+
+### Speculative Features
+- Endpoints with no frontend consumer or documented API client
+- Database columns populated but never read
+- Event handlers registered but never triggered
+- Error handling for impossible states (e.g., validating already-validated data)
+- Backward-compatibility code for hypothetical migration paths
+- Extensibility hooks with no planned extensions
+
+### Unnecessary Complexity
+- Design patterns where plain functions suffice
+- Dependency injection frameworks when constructor injection works
+- Complex state machines for linear workflows
+- Event-driven architecture for synchronous, single-step operations
+- Microservice boundaries within a monolith
+
+| Issue | Severity |
+|---|---|
+| Unused dependency with known CVE | 🔴 Critical |
+| Dead code hiding a bug (unreachable fix) | 🟡 Major |
+| Entire unused endpoint or module | 🟡 Major |
+| Abstraction with single implementation | 🔵 Minor |
+| Unused import or variable | 🔵 Minor |
+| Commented-out code block | ⚪ Nitpick |
+| Premature abstraction (one-off helper) | ⚪ Nitpick |
+
+---
+
+## Area 9: Documentation — Deep Checklist
+
+### Public API Documentation
+- All exported functions have JSDoc with `@param`, `@returns`, `@throws`
+- Type-level documentation for complex types and interfaces
+- Module-level doc comment explaining purpose and usage
+- Examples in JSDoc for non-obvious APIs (`@example`)
+- Deprecation notices with migration path (`@deprecated`)
+
+### Inline Comments
+- "Why" comments for non-obvious decisions (not "what" comments restating code)
+- Business rule comments linking to specs or requirements
+- Algorithm explanations for complex logic
+- Workaround comments with issue/ticket references
+- No misleading or outdated comments (worse than no comment)
+
+### TODO/FIXME Tracking
+- Every `TODO` has context: who, why, and ticket/issue reference
+- Every `FIXME` has severity indication and timeline
+- No stale TODOs (older than current sprint/milestone)
+- No `HACK` without explanation and planned resolution
+- `@ts-ignore`/`@ts-expect-error` has accompanying explanation
+
+### File & Module Organization
+- File headers for non-obvious modules (purpose, dependencies, constraints)
+- README in non-trivial directories (e.g., `scripts/`, `migrations/`)
+- Naming conventions self-documenting (file names match exports)
+- Barrel files (`index.ts`) don't obscure module structure
+
+### Accuracy
+- Comments match actual behavior (no stale descriptions)
+- Parameter descriptions match actual types and constraints
+- Examples compile and produce described output
+- Referenced tickets/URLs still valid
+
+| Issue | Severity |
+|---|---|
+| Misleading comment contradicting code | 🟡 Major |
+| Missing JSDoc on public API consumed externally | 🟡 Major |
+| Stale TODO referencing completed work | 🔵 Minor |
+| Missing "why" comment on workaround | 🔵 Minor |
+| Missing module-level doc | ⚪ Nitpick |
+| "What" comment restating obvious code | ⚪ Nitpick |
+
+---
+
+## Area 10: Spec Compliance — Deep Checklist
+
+### Feature Completeness
+- Every feature in `spec.md` has a corresponding implementation
+- All user-facing behaviors described in spec are present and reachable
+- Required edge cases from spec are handled (not just happy path)
+- All specified input validations are enforced
+- Default values match spec (not silently different)
+- Missing features cataloged as explicit findings (not silently skipped)
+
+### Behavioral Correctness
+- Output format matches spec (field names, types, structure)
+- Error messages and codes match spec definitions
+- Status codes match spec for each endpoint/action
+- Pagination, sorting, filtering work as specified
+- Rate limits, timeouts, and quotas match spec values
+
+### Scope Discipline
+- No unrequested features added (scope creep)
+- No spec requirements reinterpreted without documented justification
+- Optional/nice-to-have items from spec clearly marked as not-yet-implemented
+- Deviations from spec documented in `review.md` with rationale
+
+### Edge Cases & Boundaries
+- Empty input/collection cases handled as spec describes
+- Maximum/minimum values from spec enforced
+- Concurrent access scenarios from spec addressed
+- Error recovery flows match spec expectations
+
+| Issue | Severity |
+|---|---|
+| Feature from spec completely missing | 🔴 Critical |
+| Behavior contradicts spec | 🔴 Critical |
+| Edge case from spec unhandled | 🟡 Major |
+| Scope creep (unrequested feature) | 🟡 Major |
+| Default value differs from spec | 🟡 Major |
+| Spec ambiguity not flagged `[CLARIFY BEFORE FIXING]` | 🔵 Minor |
+| Optional spec item not implemented (and not noted) | 🔵 Minor |
+
+---
+
+## Area 11: Plan Compliance & Deviations — Deep Checklist
+
+### Task Completion
+- Every task in `plan.md` has corresponding code changes
+- Acceptance criteria from each task are satisfied
+- Tasks marked as completed actually pass their criteria (not just "code exists")
+- No tasks silently skipped or deferred without documentation
+- Dependency order from plan was respected (no broken assumptions)
+
+### Deviation Classification
+- **Justified Improvement**: Better approach discovered during implementation. Document why it's better. Verify it still meets the spec. *(Acceptable — note in review)*
+- **Acceptable Trade-off**: Pragmatic simplification that doesn't harm quality. Document what was traded and why. *(Acceptable — note in review)*
+- **Problematic Departure**: Plan was ignored without good reason. Original approach may have been better. *(Flag for discussion — may block)*
+
+### File Structure
+- Files created match planned file structure (or deviations justified)
+- No orphan files outside planned structure (unexplained extras)
+- Module boundaries respect planned architecture
+- Shared types/interfaces placed where plan specified
+
+### Technical Decisions
+- Tech stack matches plan (or deviation documented)
+- Libraries/packages match plan recommendations
+- Patterns (repository, factory, etc.) used as planned
+- Database schema matches planned design (or migration plan updated)
+
+### Plan Gaps
+- Ambiguities in plan flagged during implementation (not silently resolved)
+- Missing tasks discovered during implementation added to findings
+- Plan assumptions that proved wrong documented
+- Plan tasks that were infeasible documented with alternatives
+
+| Issue | Severity |
+|---|---|
+| Problematic departure from plan architecture | 🟡 Major |
+| Task from plan completely skipped | 🟡 Major |
+| Acceptance criteria not met | 🟡 Major |
+| Plan gap not flagged during implementation | 🔵 Minor |
+| Justified improvement not documented | 🔵 Minor |
+| File structure differs from plan (minor) | ⚪ Nitpick |
+
+---
+
 ## Area 12: Concurrency — Deep Checklist
 
 ### Race Conditions

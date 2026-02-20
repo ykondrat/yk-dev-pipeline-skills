@@ -136,6 +136,8 @@ The pipeline skill triggers automatically on phrases like:
 | **Brainstorm** | "let's brainstorm", "I want to build", "help me plan" |
 | **Planning** | "plan this", "break this down", "next step" (after brainstorm) |
 | **Implementation** | "implement this", "start coding", "build it" |
+| **Fix (review)** | "fix the issues", "address the feedback", "fix review findings" |
+| **Fix (tests)** | "fix failing tests", "fix test failures" |
 | **Code Review** | "review this code", "code review", "check my code" |
 | **Testing** | "write tests", "testing phase", "add tests" |
 | **Documentation** | "write docs", "generate docs", "documentation phase" |
@@ -363,11 +365,22 @@ Skills automatically load references when needed, but you can request them expli
 
 "Show database patterns for PostgreSQL"
 → Reads implementation/references/databases-sql.md
+
+"Show me Express/Fastify patterns"
+→ Reads implementation/references/frameworks-web.md
+
+"Show me React patterns"
+→ Reads implementation/references/frameworks-frontend.md
+
+"Show me Vitest and test patterns"
+→ Reads testing/references/test-patterns.md
 ```
 
 ### Parallel Phase Execution (Advanced)
 
-Normally phases run sequentially, but for existing projects you can run them in parallel:
+Normally phases run sequentially because later phases depend on earlier ones (testing
+uses code-review findings, documentation uses test reports). However, for existing
+projects where phases are independent, you can request parallel execution:
 
 ```bash
 "Review the code AND write tests in parallel"
@@ -375,6 +388,11 @@ Normally phases run sequentially, but for existing projects you can run them in 
    - Agent 1: yk-code-review
    - Agent 2: yk-testing
 ```
+
+> **Caveat**: Only parallelize phases that don't depend on each other's output.
+> For example, testing and documentation can run in parallel on existing code,
+> but code-review should complete before testing in a fresh pipeline (since
+> test failures may stem from review findings).
 
 ---
 
@@ -517,7 +535,7 @@ Output: Comprehensive review report in ~5 minutes
 ## Next Steps
 
 - Read [CLAUDE.md](CLAUDE.md) for repository-specific guidance
-- Check [examples/pipeline-state.example.json](examples/pipeline-state.example.json) for state file structure
+- Check [examples/](examples/) for example artifacts: pipeline state, plan, review, fix plans, test report
 - Review individual SKILL.md files to understand each phase
 - Read reference materials in `plugins/yk-dev-pipeline/skills/*/references/` for deep dives
 

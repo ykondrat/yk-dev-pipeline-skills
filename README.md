@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://avatars.githubusercontent.com/u/25372917?s=400&u=cb65675c0d91605c69be4e24dd2f5043b01125cc&v=4" width="120" height="120" style="border-radius: 50%;" alt="Yevhen Kondratyev" />
+</p>
+
 # 🏗️ Dev Pipeline Skills for Claude
 
 A comprehensive 6-phase development pipeline that turns Claude into a senior engineering team. From idea to production-ready, tested, documented code — using structured AI skills.
@@ -23,11 +27,14 @@ A collection of **Claude AI skills** (structured instruction files) that guide C
 
 ### Bonus: Reference Materials
 
-- **JS/TS Best Practices** (52KB) — TypeScript patterns, Node.js, modern JS, security, performance, design patterns, algorithms
-- **SQL Databases** (33KB) — PostgreSQL + MySQL with Prisma, Drizzle, and raw driver patterns
-- **NoSQL Databases** (28KB) — MongoDB + DynamoDB with Mongoose and AWS SDK patterns
-- **Redis** (40KB) — Caching, sessions, rate limiting, queues, pub/sub
-- **Review Checklists** (16KB) — Deep checklists for all 18 code review areas
+- **JS/TS Best Practices** — TypeScript patterns, Node.js, modern JS, security, performance, design patterns, algorithms
+- **Web Frameworks** — Express, Fastify, Hono, Next.js API routes — routing, middleware, error handling, project setup
+- **Frontend Frameworks** — React, Next.js App Router, Vue 3 Composition API — components, hooks, state management, testing
+- **SQL Databases** — PostgreSQL + MySQL with Prisma, Drizzle, and raw driver patterns
+- **NoSQL Databases** — MongoDB + DynamoDB with Mongoose and AWS SDK patterns
+- **Redis** — Caching, sessions, rate limiting, queues, pub/sub
+- **Review Checklists** — Deep checklists for all 18 code review areas
+- **Test Patterns** — Vitest reference, component testing, MSW mocking, factories, anti-patterns
 
 ## Installation
 
@@ -185,7 +192,9 @@ yk-dev-pipeline-skills/
 │           │       ├── js-ts-best-practices.md
 │           │       ├── databases-sql.md
 │           │       ├── databases-nosql.md
-│           │       └── databases-redis.md
+│           │       ├── databases-redis.md
+│           │       ├── frameworks-web.md
+│           │       └── frameworks-frontend.md
 │           ├── code-review/
 │           │   ├── SKILL.md             ← Phase 4
 │           │   └── references/
@@ -199,7 +208,12 @@ yk-dev-pipeline-skills/
 │               └── references/
 │                   └── doc-templates.md
 ├── examples/
-│   └── pipeline-state.example.json
+│   ├── pipeline-state.example.json
+│   ├── plan.example.md
+│   ├── review.example.md
+│   ├── fix-plan.example.md
+│   ├── fix-test-plan.example.md
+│   └── test-report.example.md
 ├── README.md                            ← You are here
 ├── USAGE.md
 ├── CONTRIBUTING.md
@@ -214,7 +228,7 @@ These skills are designed to be forked and customized:
 - **Add your own conventions** — edit the style/naming sections to match your team
 - **Add/remove review areas** — edit `code-review/SKILL.md` and `references/review-checklists.md`
 - **Change coverage targets** — edit `testing/SKILL.md`
-- **Add frameworks** — extend the best practices reference with React, Next.js, etc.
+- **Add frameworks** — extend with Angular, Svelte, NestJS, etc. (React, Vue, Express, Fastify, Hono, Next.js already covered)
 - **Change defaults** — swap Vitest for Jest, Prisma for Drizzle, etc.
 
 ## How It Works Under the Hood
@@ -232,10 +246,9 @@ Claude AI skills are markdown files with structured instructions. When Claude re
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 Areas where contributions are welcome:
-- Additional reference materials (React, Vue, Angular, Next.js patterns)
-- New review checklist areas
-- Additional test patterns
+- Additional reference materials (Angular, Svelte, NestJS, tRPC patterns)
 - Language-specific adaptations (Python, Go, Rust)
+- Infrastructure patterns (Docker, Kubernetes, Terraform, CI/CD)
 - Bug fixes and improvements to existing skills
 
 ## Publishing to Marketplaces

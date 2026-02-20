@@ -168,6 +168,8 @@ When reading `pipeline-state.json`, validate before proceeding:
 | "Review this code" | Start Phase 4 (Code Review) |
 | "Write tests" | Start Phase 5 (Testing) |
 | "Generate docs" | Start Phase 6 (Documentation) |
+| "Fix the review issues" / "Address the feedback" | Start Phase 3 (Implementation) in fix mode — read `fix-plan.md` |
+| "Fix the failing tests" / "Fix test failures" | Start Phase 3 (Implementation) in test-fix mode — read `fix-test-plan.md` |
 | "Continue" / "Next step" | Check pipeline-state.json, proceed to next phase |
 | "What's the status?" | Read pipeline-state.json, summarize progress |
 | "Start over" | Reset pipeline-state.json, start Phase 1 |

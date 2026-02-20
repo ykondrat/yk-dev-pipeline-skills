@@ -16,8 +16,8 @@ for software development, and we welcome contributions from the community.
 
 We'd love to expand coverage to more frameworks and languages:
 
-- **Frontend frameworks**: React, Vue, Angular, Svelte, Next.js, Nuxt
-- **Backend frameworks**: NestJS, Fastify patterns, tRPC
+- **Frontend frameworks**: Angular, Svelte, Nuxt (React, Vue, Next.js already covered)
+- **Backend frameworks**: NestJS, tRPC (Express, Fastify, Hono already covered)
 - **Languages**: Python, Go, Rust, Java adaptations
 - **Infrastructure**: Docker, Kubernetes, Terraform, CI/CD patterns
 - **Specialized areas**: GraphQL, WebSockets, microservices, event sourcing
@@ -73,6 +73,32 @@ Since these are instruction files, not code, testing means:
 2. Give Claude a realistic task that exercises the skill
 3. Verify Claude follows the instructions correctly
 4. Check that the output matches what the skill describes
+
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/):
+
+- **Patch** (1.0.x): Typo fixes, minor wording improvements, added examples
+- **Minor** (1.x.0): New reference files, new review checklist areas, new features in skills
+- **Major** (x.0.0): Breaking changes to skill names, artifact formats, or pipeline flow
+
+### How to Bump Versions
+
+When making changes, update the version in **all three locations**:
+
+1. `.claude-plugin/marketplace.json` → `metadata.version` and `plugins[0].version`
+2. `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` → `version`
+3. `.skillrc.json` → `version`
+
+### For Users: Updating Installed Plugins
+
+Users who installed via the Claude Code marketplace can update by re-running:
+
+```bash
+claude /plugin marketplace add yk-dev-pipeline
+```
+
+This pulls the latest version from the repository.
 
 ## License
 

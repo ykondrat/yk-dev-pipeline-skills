@@ -43,6 +43,8 @@ Read implementation/references/js-ts-best-practices.md    # Always read this
 Read implementation/references/databases-sql.md            # If using PostgreSQL or MySQL
 Read implementation/references/databases-nosql.md          # If using MongoDB or DynamoDB
 Read implementation/references/databases-redis.md          # If using Redis for caching/queues/sessions
+Read implementation/references/frameworks-web.md           # If using Express, Fastify, Hono, or Next.js API routes
+Read implementation/references/frameworks-frontend.md      # If building a frontend (React, Next.js, Vue 3)
 ```
 
 The JS/TS reference covers TypeScript patterns, Node.js patterns, modern JavaScript, security,
@@ -413,10 +415,49 @@ Update `pipeline-state.json`:
 }
 ```
 
-**Git (optional):**
-> "Want me to commit? I'd suggest one commit per batch, or one squashed commit."
+**Git commit message:**
 
-Conventional commits: `feat({module}): {description}`, `fix: {description}`
+Always provide a ready-to-use commit message at the end of implementation. Present it
+in a fenced code block so the user can copy and paste it directly.
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) format. The message must include:
+
+1. **Type + scope**: `feat(module)`, `fix(module)`, or `refactor(module)`
+2. **Short summary** (first line, max 72 chars): what was built
+3. **Body**: list of what was implemented, grouped logically
+4. **Footer**: note deviations, flagged issues, or items for review
+
+```
+feat(url-shortener): implement URL shortening API with analytics
+
+- Add URL creation, resolution (302 redirect), and deletion endpoints
+- Add click tracking with fire-and-forget analytics recording
+- Set up PostgreSQL (Prisma) + Redis (ioredis) infrastructure
+- Add sliding-window rate limiting via Redis sorted sets
+- Add centralized error handling with custom error classes
+- Add health check endpoint with DB and Redis status
+- Configure TypeScript strict mode, Vitest, and ESLint
+
+Deviations from plan:
+- Used ioredis instead of node-redis (better TypeScript support)
+
+Flagged for review:
+- Rate limiter cleanup of expired sorted set members
+- Click recording error handling (fire-and-forget)
+```
+
+> "Here's a commit message you can use. Want me to commit, or would you prefer to adjust it first?"
+
+If the user is in **fix mode** (applying `fix-plan.md` or `fix-test-plan.md`), use:
+
+```
+fix(url-shortener): address code review findings [CR-001..CR-004]
+
+- Add timeout on redirect DB fallback (CR-001)
+- Clean up expired rate limit entries (CR-002)
+- Log failed click recordings (CR-003)
+- Report Redis status in health check (CR-004)
+```
 
 **Handoff:**
 > "Implementation complete — {N} tasks done, all quality gates passing. The next step

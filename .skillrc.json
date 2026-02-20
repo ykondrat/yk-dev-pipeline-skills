@@ -1,7 +1,7 @@
 {
   "$schema": "https://agentskills.io/schema.json",
   "name": "yk-dev-pipeline-skills",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Complete 6-phase JS/TS development pipeline for Claude Code",
   "author": "Yevhen Kondratyev",
   "license": "MIT",
@@ -13,23 +13,27 @@
   "skills": {
     "yk-dev-pipeline": {
       "entry": "plugins/yk-dev-pipeline/skills/SKILL.md",
+      "description": "Full 6-phase development pipeline router",
       "type": "router",
       "model": "sonnet"
     },
     "yk-brainstorm": {
       "entry": "plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md",
+      "description": "Deep-dive requirements gathering",
       "type": "phase",
       "model": "opus",
       "phase": 1
     },
     "yk-planning": {
       "entry": "plugins/yk-dev-pipeline/skills/planning/SKILL.md",
+      "description": "Task breakdown and architecture planning",
       "type": "phase",
       "model": "sonnet",
       "phase": 2
     },
     "yk-implementation": {
       "entry": "plugins/yk-dev-pipeline/skills/implementation/SKILL.md",
+      "description": "Code execution with quality gates",
       "type": "phase",
       "model": "opus",
       "phase": 3,
@@ -37,11 +41,14 @@
         "plugins/yk-dev-pipeline/skills/implementation/references/js-ts-best-practices.md",
         "plugins/yk-dev-pipeline/skills/implementation/references/databases-sql.md",
         "plugins/yk-dev-pipeline/skills/implementation/references/databases-nosql.md",
-        "plugins/yk-dev-pipeline/skills/implementation/references/databases-redis.md"
+        "plugins/yk-dev-pipeline/skills/implementation/references/databases-redis.md",
+        "plugins/yk-dev-pipeline/skills/implementation/references/frameworks-web.md",
+        "plugins/yk-dev-pipeline/skills/implementation/references/frameworks-frontend.md"
       ]
     },
     "yk-code-review": {
       "entry": "plugins/yk-dev-pipeline/skills/code-review/SKILL.md",
+      "description": "18-area comprehensive code review",
       "type": "phase",
       "model": "opus",
       "phase": 4,
@@ -51,6 +58,7 @@
     },
     "yk-testing": {
       "entry": "plugins/yk-dev-pipeline/skills/testing/SKILL.md",
+      "description": "Comprehensive test generation",
       "type": "phase",
       "model": "sonnet",
       "phase": 5,
@@ -60,6 +68,7 @@
     },
     "yk-documentation": {
       "entry": "plugins/yk-dev-pipeline/skills/documentation/SKILL.md",
+      "description": "Full project documentation generation",
       "type": "phase",
       "model": "sonnet",
       "phase": 6,

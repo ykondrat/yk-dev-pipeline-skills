@@ -1,6 +1,6 @@
 {
   "name": "yk-dev-pipeline-skills",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "6-phase JS/TS development pipeline for Claude Code - from brainstorm to documentation",
   "keywords": [
     "claude-skill",
@@ -48,7 +48,9 @@
         "implementation/references/js-ts-best-practices.md",
         "implementation/references/databases-sql.md",
         "implementation/references/databases-nosql.md",
-        "implementation/references/databases-redis.md"
+        "implementation/references/databases-redis.md",
+        "implementation/references/frameworks-web.md",
+        "implementation/references/frameworks-frontend.md"
       ]
     },
     {

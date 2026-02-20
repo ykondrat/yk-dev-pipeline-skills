@@ -21,11 +21,11 @@ This repo is structured as a **Claude Code plugin marketplace** with one plugin:
   - `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` — Minimal plugin manifest (`name`, `version`, `description`, `author`). Skills are auto-discovered from the `skills/` directory.
   - `plugins/yk-dev-pipeline/skills/SKILL.md` — **Router/entry point**. Defines the pipeline, handles phase navigation, manages `pipeline-state.json`.
   - `plugins/yk-dev-pipeline/skills/{phase}/SKILL.md` — Phase-specific instructions (brainstorm, planning, implementation, code-review, testing, documentation).
-  - `plugins/yk-dev-pipeline/skills/implementation/references/` — Deep reference materials (~5,500 lines): JS/TS best practices, SQL/NoSQL/Redis database patterns.
-  - `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md` — 18-area review checklists with severity guidance.
-  - `plugins/yk-dev-pipeline/skills/testing/references/test-patterns.md` — Test writing patterns, factories, mocking, assertions, anti-patterns.
+  - `plugins/yk-dev-pipeline/skills/implementation/references/` — Deep reference materials: JS/TS best practices, SQL/NoSQL/Redis database patterns, web framework patterns (Express/Fastify/Hono/Next.js), frontend framework patterns (React/Next.js/Vue 3).
+  - `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md` — All 18 review area checklists with severity guidance.
+  - `plugins/yk-dev-pipeline/skills/testing/references/test-patterns.md` — Vitest reference, test writing patterns, factories, mocking, assertions, frontend testing, anti-patterns.
   - `plugins/yk-dev-pipeline/skills/documentation/references/doc-templates.md` — Templates for all 7 doc types (README, API, architecture, etc.).
-- `examples/pipeline-state.example.json` — Example state tracking file.
+- `examples/` — Example artifacts: `pipeline-state.example.json`, `plan.example.md`, `review.example.md`, `fix-plan.example.md`, `fix-test-plan.example.md`, `test-report.example.md`.
 
 ## No Build/Test/Lint Commands
 
