@@ -30,6 +30,21 @@ brainstorm → [planning] → implementation → code-review → testing → doc
 
 ---
 
+## References
+
+When making architecture and technology decisions during planning, consult the best
+practices reference (path relative to the skills root):
+
+```
+Read implementation/references/js-ts-best-practices.md
+```
+
+This helps inform decisions about project structure, design patterns, and technology
+choices. You don't need the database references at this stage — those are loaded during
+implementation when writing actual database code.
+
+---
+
 ## The Process
 
 ### Step 1: Read the Spec & Context

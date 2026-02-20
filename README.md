@@ -33,17 +33,21 @@ A collection of **Claude AI skills** (structured instruction files) that guide C
 
 ### Claude Code (CLI)
 
-#### Method 1: Using `/plugin` Command (Recommended)
+#### Method 1: Plugin Marketplace (Recommended)
 
 ```bash
-# In Claude Code CLI
+# Add the marketplace repo, then install the plugin
+/plugin marketplace add ykondrat/yk-dev-pipeline-skills
+/plugin install yk-dev-pipeline
+
+# Or install directly from the repo
 /plugin install ykondrat/yk-dev-pipeline-skills
 
 # Or install from a specific branch
 /plugin install ykondrat/yk-dev-pipeline-skills@main
 
-# Or install from local directory
-/plugin install /path/to/dev-pipeline-skills
+# Or install from a local directory
+/plugin install /path/to/yk-dev-pipeline-skills
 ```
 
 After installation, restart Claude Code to apply changes.
@@ -55,7 +59,7 @@ After installation, restart Claude Code to apply changes.
 
 **Uninstall:**
 ```bash
-/plugin uninstall yk-dev-pipeline-skills
+/plugin uninstall yk-dev-pipeline
 ```
 
 #### Method 2: Manual Installation
@@ -63,22 +67,22 @@ After installation, restart Claude Code to apply changes.
 ```bash
 # Option 1: Install globally (for all projects)
 git clone https://github.com/ykondrat/yk-dev-pipeline-skills.git
-cp -r yk-dev-pipeline-skills/skills ~/.claude/skills/yk-dev-pipeline
+cp -r yk-dev-pipeline-skills/plugins/yk-dev-pipeline/skills ~/.claude/skills/yk-dev-pipeline
 
 # Option 2: Install per-project
-cp -r yk-dev-pipeline-skills/skills /path/to/your/project/.claude/skills/yk-dev-pipeline
+cp -r yk-dev-pipeline-skills/plugins/yk-dev-pipeline/skills /path/to/your/project/.claude/skills/yk-dev-pipeline
 ```
 
 #### Method 3: Direct Download
 
 1. Download this repository as ZIP
-2. Extract to `~/.claude/skills/yk-dev-pipeline/`
+2. Extract `plugins/yk-dev-pipeline/skills/` to `~/.claude/skills/yk-dev-pipeline/`
 3. Restart Claude Code
 
 ### Claude.ai Projects
 
 1. Go to [claude.ai](https://claude.ai) → **Projects** → **Create Project**
-2. Click **Add Knowledge** → upload the `skills/` folder contents
+2. Click **Add Knowledge** → upload the `plugins/yk-dev-pipeline/skills/` folder contents
 3. Add this to **Project Instructions**:
 
 ```
@@ -104,15 +108,7 @@ Always read reference files when the skill instructs you to.
 1. Download this repository as ZIP
 2. Start a new conversation at [claude.ai](https://claude.ai)
 3. Drag the ZIP into the chat
-4. Say: **"Read skills/SKILL.md and help me build [your project]"**
-
-### Marketplace (Coming Soon)
-
-Once indexed by SkillsMP or SkillHub (usually within 48 hours of publishing):
-
-1. Search for "yk-dev-pipeline" in the marketplace
-2. Click "Install"
-3. Skills will be automatically added to your Claude Code
+4. Say: **"Read plugins/yk-dev-pipeline/skills/SKILL.md and help me build [your project]"**
 
 ## Quick Start
 
@@ -156,12 +152,12 @@ Each phase:
 
 | Phase | Skill | What It Does | Output |
 |-------|-------|-------------|--------|
-| 1 | [Brainstorm](skills/brainstorm/SKILL.md) | Requirements gathering, approach exploration | `spec.md`, design doc |
-| 2 | [Planning](skills/planning/SKILL.md) | Task breakdown, dependency graph | `plan.md`, `docs/plans/*-plan.md` |
-| 3 | [Implementation](skills/implementation/SKILL.md) | Code writing with quality gates | Working code |
-| 4 | [Code Review](skills/code-review/SKILL.md) | 18-area strict review | `review.md`, `fix-plan.md` |
-| 5 | [Testing](skills/testing/SKILL.md) | Comprehensive test generation | Tests, `test-report.md`, `fix-test-plan.md` (if blocked) |
-| 6 | [Documentation](skills/documentation/SKILL.md) | Full project documentation | README, API docs, etc. |
+| 1 | [Brainstorm](plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md) | Requirements gathering, approach exploration | `spec.md`, design doc |
+| 2 | [Planning](plugins/yk-dev-pipeline/skills/planning/SKILL.md) | Task breakdown, dependency graph | `plan.md`, `docs/plans/*-plan.md` |
+| 3 | [Implementation](plugins/yk-dev-pipeline/skills/implementation/SKILL.md) | Code writing with quality gates | Working code |
+| 4 | [Code Review](plugins/yk-dev-pipeline/skills/code-review/SKILL.md) | 18-area strict review | `review.md`, `fix-plan.md` |
+| 5 | [Testing](plugins/yk-dev-pipeline/skills/testing/SKILL.md) | Comprehensive test generation | Tests, `test-report.md`, `fix-test-plan.md` (if blocked) |
+| 6 | [Documentation](plugins/yk-dev-pipeline/skills/documentation/SKILL.md) | Full project documentation | README, API docs, etc. |
 
 ## Example Usage
 
@@ -197,33 +193,45 @@ Claude: [Documentation] README, API docs, architecture, deployment guide
 ## Repository Structure
 
 ```
-dev-pipeline-skills/
-├── README.md                                    ← You are here
-├── LICENSE
+yk-dev-pipeline-skills/
+├── .claude-plugin/
+│   └── marketplace.json                 ← Marketplace catalog
+├── plugins/
+│   └── yk-dev-pipeline/
+│       ├── .claude-plugin/
+│       │   └── plugin.json              ← Plugin manifest
+│       └── skills/
+│           ├── SKILL.md                 ← Pipeline router
+│           ├── brainstorm/
+│           │   └── SKILL.md             ← Phase 1
+│           ├── planning/
+│           │   └── SKILL.md             ← Phase 2
+│           ├── implementation/
+│           │   ├── SKILL.md             ← Phase 3
+│           │   └── references/
+│           │       ├── js-ts-best-practices.md
+│           │       ├── databases-sql.md
+│           │       ├── databases-nosql.md
+│           │       └── databases-redis.md
+│           ├── code-review/
+│           │   ├── SKILL.md             ← Phase 4
+│           │   └── references/
+│           │       └── review-checklists.md
+│           ├── testing/
+│           │   ├── SKILL.md             ← Phase 5
+│           │   └── references/
+│           │       └── test-patterns.md
+│           └── documentation/
+│               ├── SKILL.md             ← Phase 6
+│               └── references/
+│                   └── doc-templates.md
+├── examples/
+│   └── pipeline-state.example.json
+├── README.md                            ← You are here
+├── USAGE.md
 ├── CONTRIBUTING.md
-├── skills/
-│   ├── SKILL.md                                 ← Pipeline router
-│   ├── brainstorm/
-│   │   └── SKILL.md                             ← Phase 1
-│   ├── planning/
-│   │   └── SKILL.md                             ← Phase 2
-│   ├── implementation/
-│   │   ├── SKILL.md                             ← Phase 3
-│   │   └── references/
-│   │       ├── js-ts-best-practices.md          ← TypeScript, Node.js, patterns
-│   │       ├── databases-sql.md                 ← PostgreSQL, MySQL
-│   │       ├── databases-nosql.md               ← MongoDB, DynamoDB
-│   │       └── databases-redis.md               ← Redis
-│   ├── code-review/
-│   │   ├── SKILL.md                             ← Phase 4
-│   │   └── references/
-│   │       └── review-checklists.md             ← 18 deep review checklists
-│   ├── testing/
-│   │   └── SKILL.md                             ← Phase 5
-│   └── documentation/
-│       └── SKILL.md                             ← Phase 6
-└── examples/
-    └── pipeline-state.example.json              ← Example state file
+├── LICENSE
+└── .skillrc.json
 ```
 
 ## Customization
@@ -259,11 +267,14 @@ Areas where contributions are welcome:
 
 ## Publishing to Marketplaces
 
-This skill collection is designed to be automatically indexed by Claude skills marketplaces:
+This skill collection is structured as a **Claude Code plugin marketplace** repo. It can be installed via:
 
-- **SkillsMP**: Automatic indexing via GitHub topics (48 hours)
-- **SkillHub**: Automatic GitHub repository scanning
-- **AgentSkills.io**: Manual submission available
+```bash
+/plugin marketplace add ykondrat/yk-dev-pipeline-skills
+/plugin install yk-dev-pipeline
+```
+
+The `.claude-plugin/marketplace.json` at the repo root and `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` provide the metadata for automatic discovery and installation.
 
 ### GitHub Topics Required
 Make sure your repository has these topics for automatic discovery:

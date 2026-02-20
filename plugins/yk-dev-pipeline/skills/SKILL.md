@@ -100,6 +100,19 @@ the pipeline is and what's been completed:
 }
 ```
 
+### State Validation
+
+When reading `pipeline-state.json`, validate before proceeding:
+
+- **Missing artifacts:** If a phase says "completed" but its outputs don't exist on disk,
+  warn the user and suggest re-running that phase.
+- **Blocked without fix plan:** If code-review or testing is "blocked" but `fix-plan.md` /
+  `fix-test-plan.md` is missing, flag the inconsistency.
+- **Stale state:** If `current_phase` doesn't match the most recently completed phase + 1,
+  ask the user which phase they want to continue from.
+- **Out-of-order completion:** If a later phase is completed but an earlier one isn't,
+  note this and ask if it's intentional (e.g., user jumped to a phase directly).
+
 ## Phase Summary
 
 ### Phase 1: Brainstorm

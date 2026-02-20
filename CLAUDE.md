@@ -14,10 +14,17 @@ Each phase has a dedicated SKILL.md with detailed processes, and produces artifa
 
 ## Repository Structure
 
-- `skills/SKILL.md` — **Router/entry point**. Defines the pipeline, handles phase navigation, manages `pipeline-state.json`.
-- `skills/{phase}/SKILL.md` — Phase-specific instructions (brainstorm, planning, implementation, code-review, testing, documentation).
-- `skills/implementation/references/` — Deep reference materials (~5,500 lines): JS/TS best practices, SQL/NoSQL/Redis database patterns.
-- `skills/code-review/references/review-checklists.md` — 18-area review checklists with severity guidance.
+This repo is structured as a **Claude Code plugin marketplace** with one plugin:
+
+- `.claude-plugin/marketplace.json` — **Marketplace catalog**. Lists all plugins available for installation.
+- `plugins/yk-dev-pipeline/` — **Plugin directory** containing the dev pipeline.
+  - `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` — Plugin manifest with skill definitions.
+  - `plugins/yk-dev-pipeline/skills/SKILL.md` — **Router/entry point**. Defines the pipeline, handles phase navigation, manages `pipeline-state.json`.
+  - `plugins/yk-dev-pipeline/skills/{phase}/SKILL.md` — Phase-specific instructions (brainstorm, planning, implementation, code-review, testing, documentation).
+  - `plugins/yk-dev-pipeline/skills/implementation/references/` — Deep reference materials (~5,500 lines): JS/TS best practices, SQL/NoSQL/Redis database patterns.
+  - `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md` — 18-area review checklists with severity guidance.
+  - `plugins/yk-dev-pipeline/skills/testing/references/test-patterns.md` — Test writing patterns, factories, mocking, assertions, anti-patterns.
+  - `plugins/yk-dev-pipeline/skills/documentation/references/doc-templates.md` — Templates for all 7 doc types (README, API, architecture, etc.).
 - `examples/pipeline-state.example.json` — Example state tracking file.
 
 ## No Build/Test/Lint Commands
@@ -40,7 +47,7 @@ Every SKILL.md uses:
 - **Fix plan files** — code review produces `fix-plan.md`, testing produces `fix-test-plan.md` when blocked. The implementation skill reads all three: `plan.md`, `fix-plan.md`, `fix-test-plan.md`
 - **Failure recovery loops** — code review can block and loop back to implementation; testing can block (status `"blocked"`) and loop back to implementation, or skip failing tests (marked `.todo`) — user decides via `AskUserQuestion`
 - **Pipeline state** tracked in `pipeline-state.json` at the project root (statuses: `pending`, `in-progress`, `completed`, `blocked`)
-- **Review severity levels**: 🔴 Critical, 🟡 Major, 🔵 Minor, ⚪ Nitpick, 🟣 Debatable
+- **Review severity levels**: 🔴 Critical, 🟡 Major, 🔵 Minor, ⚪ Nitpick. Debatable findings are tagged `[DEBATABLE]` (not a separate severity level)
 
 ## Editing Skills
 
@@ -54,5 +61,5 @@ When modifying skills, preserve:
 ## Adding New Content
 
 - **New reference materials** go in the appropriate `references/` directory, following the structure of existing references (rationale + examples + severity tables)
-- **New review checklist areas** go in `skills/code-review/references/review-checklists.md` with standard severity emoji levels
+- **New review checklist areas** go in `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md` with standard severity emoji levels
 - **Parent SKILL.md must be updated** to reference any new files

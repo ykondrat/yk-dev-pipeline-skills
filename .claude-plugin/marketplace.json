@@ -1,0 +1,30 @@
+{
+  "$schema": "https://claude.ai/schemas/marketplace.json",
+  "name": "yk-dev-pipeline-skills",
+  "display_name": "Dev Pipeline Skills",
+  "description": "Complete 6-phase JS/TS development pipeline for Claude Code — from brainstorm to production-ready, tested, documented code.",
+  "author": {
+    "name": "Yevhen Kondratyev",
+    "github": "ykondrat"
+  },
+  "repository": "https://github.com/ykondrat/yk-dev-pipeline-skills",
+  "license": "MIT",
+  "version": "1.0.0",
+  "keywords": [
+    "development",
+    "typescript",
+    "javascript",
+    "code-review",
+    "testing",
+    "documentation",
+    "pipeline",
+    "workflow"
+  ],
+  "plugins": [
+    {
+      "name": "yk-dev-pipeline",
+      "path": "plugins/yk-dev-pipeline",
+      "description": "6-phase JS/TS development pipeline: brainstorm, planning, implementation, code review, testing, documentation"
+    }
+  ]
+}

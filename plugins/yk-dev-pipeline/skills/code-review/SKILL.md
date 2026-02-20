@@ -55,6 +55,20 @@ brainstorm → planning → implementation → [code-review] → testing → doc
 **Diff Review** (re-reviews): Review only changed files via `git diff`. Read full files
 for context but focus analysis on diffs.
 
+### Re-Review Protocol
+
+When re-reviewing after fixes:
+
+- **Check previous review.md** — load the prior review to know what was found
+- **Don't re-raise resolved findings** — if a finding from the previous review was fixed
+  correctly, don't mention it again. Focus on whether the fix is correct and complete.
+- **Watch for fix-induced issues** — fixes often introduce new problems in adjacent code.
+  Check that each fix doesn't break something else (verify via regression checks in fix-plan.md).
+- **Track finding IDs** — use the same `[CR-{NNN}]` IDs from the original review when
+  commenting on whether a fix is correct. New findings get new sequential IDs.
+- **Downgrade or close** — if a previous finding was partially addressed, downgrade its
+  severity rather than re-raising at the original level.
+
 ---
 
 ## The Process

@@ -43,25 +43,40 @@
       "name": "yk-implementation",
       "path": "implementation/SKILL.md",
       "description": "Code execution with quality gates",
-      "phase": 3
+      "phase": 3,
+      "references": [
+        "implementation/references/js-ts-best-practices.md",
+        "implementation/references/databases-sql.md",
+        "implementation/references/databases-nosql.md",
+        "implementation/references/databases-redis.md"
+      ]
     },
     {
       "name": "yk-code-review",
       "path": "code-review/SKILL.md",
       "description": "18-area comprehensive code review",
-      "phase": 4
+      "phase": 4,
+      "references": [
+        "code-review/references/review-checklists.md"
+      ]
     },
     {
       "name": "yk-testing",
       "path": "testing/SKILL.md",
       "description": "Comprehensive test generation",
-      "phase": 5
+      "phase": 5,
+      "references": [
+        "testing/references/test-patterns.md"
+      ]
     },
     {
       "name": "yk-documentation",
       "path": "documentation/SKILL.md",
       "description": "Full project documentation generation",
-      "phase": 6
+      "phase": 6,
+      "references": [
+        "documentation/references/doc-templates.md"
+      ]
     }
   ]
 }

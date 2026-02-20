@@ -14,18 +14,22 @@ This guide shows you how to use the skills in different environments and scenari
 ## Using in Claude Code (CLI)
 
 ### Installation
-https://github.com/ykondrat/yk-dev-pipeline-skills.git
-#### Method 1: Using `/plugin` Command (Recommended)
+
+#### Method 1: Plugin Marketplace (Recommended)
 
 ```bash
-# In Claude Code CLI
+# Add the marketplace repo, then install the plugin
+/plugin marketplace add ykondrat/yk-dev-pipeline-skills
+/plugin install yk-dev-pipeline
+
+# Or install directly from the repo
 /plugin install ykondrat/yk-dev-pipeline-skills
 
 # Or install from a specific branch
 /plugin install ykondrat/yk-dev-pipeline-skills@main
 
-# Or install from local directory
-/plugin install /path/to/dev-pipeline-skills
+# Or install from a local directory
+/plugin install /path/to/yk-dev-pipeline-skills
 ```
 
 After installation, restart Claude Code to apply changes.
@@ -37,17 +41,18 @@ To verify installation:
 
 To uninstall:
 ```bash
-/plugin uninstall yk-dev-pipeline-skills
+/plugin uninstall yk-dev-pipeline
 ```
 
 #### Method 2: Manual Installation
 
 ```bash
 # Option 1: Install globally (for all projects)
-cp -r skills ~/.claude/skills/yk-dev-pipeline
+git clone https://github.com/ykondrat/yk-dev-pipeline-skills.git
+cp -r yk-dev-pipeline-skills/plugins/yk-dev-pipeline/skills ~/.claude/skills/yk-dev-pipeline
 
 # Option 2: Install per-project
-cp -r skills /path/to/your/project/.claude/skills/yk-dev-pipeline
+cp -r yk-dev-pipeline-skills/plugins/yk-dev-pipeline/skills /path/to/your/project/.claude/skills/yk-dev-pipeline
 ```
 
 ### Invocation in Claude Code
@@ -96,7 +101,7 @@ Just describe what you want and Claude will automatically detect and use the app
 ### Setup
 
 1. Go to [claude.ai](https://claude.ai) → **Projects** → **Create Project**
-2. Click **Add Knowledge** → Upload the entire `skills/` folder
+2. Click **Add Knowledge** → Upload the `plugins/yk-dev-pipeline/skills/` folder contents
 3. Add this to **Project Instructions**:
 
 ```markdown
@@ -148,9 +153,9 @@ Claude will:
 ### Invocation
 
 ```
-"Read skills/SKILL.md and help me build a task management API"
-"Use skills/brainstorm/SKILL.md to explore requirements for user auth"
-"Apply skills/code-review/SKILL.md to review my TypeScript code"
+"Read plugins/yk-dev-pipeline/skills/SKILL.md and help me build a task management API"
+"Use plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md to explore requirements for user auth"
+"Apply plugins/yk-dev-pipeline/skills/code-review/SKILL.md to review my TypeScript code"
 ```
 
 ---
@@ -392,13 +397,13 @@ Skills automatically load references when needed, but you can request them expli
 
 ```bash
 "Show me the JS/TS best practices reference"
-→ Reads skills/implementation/references/js-ts-best-practices.md
+→ Reads implementation/references/js-ts-best-practices.md
 
 "What are the code review checklists?"
-→ Reads skills/code-review/references/review-checklists.md
+→ Reads code-review/references/review-checklists.md
 
 "Show database patterns for PostgreSQL"
-→ Reads skills/implementation/references/databases-sql.md
+→ Reads implementation/references/databases-sql.md
 ```
 
 ### Parallel Phase Execution (Advanced)
@@ -450,7 +455,7 @@ The pipeline creates `pipeline-state.json` at your project root:
       }
     },
     "code-review": { "status": "pending" },
-    "testing": { "status": "pending" },  // can also be "blocked" if tests need implementation fixes
+    "testing": { "status": "pending" },
     "documentation": { "status": "pending" }
   }
 }
@@ -482,7 +487,7 @@ This file helps Claude:
 ### "Skill not found"
 - **Claude Code**:
   - Run `/plugin list` to verify installation
-  - If not listed, reinstall with `/plugin install ykondrat/yk-dev-pipeline-skills`
+  - If not listed, reinstall with `/plugin marketplace add ykondrat/yk-dev-pipeline-skills` then `/plugin install yk-dev-pipeline`
   - Restart Claude Code after installation
   - Alternatively, manually check `~/.claude/skills/yk-dev-pipeline/` exists
 - **Claude.ai**: Re-upload the skills folder to your project knowledge
@@ -556,7 +561,7 @@ Output: Comprehensive review report in ~5 minutes
 - Read [CLAUDE.md](CLAUDE.md) for repository-specific guidance
 - Check [examples/pipeline-state.example.json](examples/pipeline-state.example.json) for state file structure
 - Review individual SKILL.md files to understand each phase
-- Read reference materials in `skills/*/references/` for deep dives
+- Read reference materials in `plugins/yk-dev-pipeline/skills/*/references/` for deep dives
 
 ---
 
