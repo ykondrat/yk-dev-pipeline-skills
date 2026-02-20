@@ -16,9 +16,9 @@ Each phase has a dedicated SKILL.md with detailed processes, and produces artifa
 
 This repo is structured as a **Claude Code plugin marketplace** with one plugin:
 
-- `.claude-plugin/marketplace.json` — **Marketplace catalog**. Lists all plugins available for installation.
+- `.claude-plugin/marketplace.json` — **Marketplace catalog** (`owner`, `plugins` with `source` paths). Validated by Claude Code on `/plugin marketplace add`.
 - `plugins/yk-dev-pipeline/` — **Plugin directory** containing the dev pipeline.
-  - `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` — Plugin manifest with skill definitions.
+  - `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` — Minimal plugin manifest (`name`, `version`, `description`, `author`). Skills are auto-discovered from the `skills/` directory.
   - `plugins/yk-dev-pipeline/skills/SKILL.md` — **Router/entry point**. Defines the pipeline, handles phase navigation, manages `pipeline-state.json`.
   - `plugins/yk-dev-pipeline/skills/{phase}/SKILL.md` — Phase-specific instructions (brainstorm, planning, implementation, code-review, testing, documentation).
   - `plugins/yk-dev-pipeline/skills/implementation/references/` — Deep reference materials (~5,500 lines): JS/TS best practices, SQL/NoSQL/Redis database patterns.

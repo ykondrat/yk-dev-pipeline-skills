@@ -29,8 +29,8 @@ To add a reference:
 
 ### Adding New Review Checklist Areas
 
-1. Add the checklist to `skills/code-review/references/review-checklists.md`
-2. Add a summary entry in `skills/code-review/SKILL.md` under Review Areas
+1. Add the checklist to `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md`
+2. Add a summary entry in `plugins/yk-dev-pipeline/skills/code-review/SKILL.md` under Review Areas
 3. Include severity guidance with the standard emoji levels (🔴🟡🔵⚪)
 
 ### Reporting Issues

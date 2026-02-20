@@ -33,21 +33,11 @@ A collection of **Claude AI skills** (structured instruction files) that guide C
 
 ### Claude Code (CLI)
 
-#### Method 1: Plugin Marketplace (Recommended)
+#### Plugin Marketplace
 
 ```bash
-# Add the marketplace repo, then install the plugin
-/plugin marketplace add ykondrat/yk-dev-pipeline-skills
-/plugin install yk-dev-pipeline
-
-# Or install directly from the repo
-/plugin install ykondrat/yk-dev-pipeline-skills
-
-# Or install from a specific branch
-/plugin install ykondrat/yk-dev-pipeline-skills@main
-
-# Or install from a local directory
-/plugin install /path/to/yk-dev-pipeline-skills
+/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git
+/plugin install yk-dev-pipeline@yk-dev-pipeline-skills
 ```
 
 After installation, restart Claude Code to apply changes.
@@ -61,23 +51,6 @@ After installation, restart Claude Code to apply changes.
 ```bash
 /plugin uninstall yk-dev-pipeline
 ```
-
-#### Method 2: Manual Installation
-
-```bash
-# Option 1: Install globally (for all projects)
-git clone https://github.com/ykondrat/yk-dev-pipeline-skills.git
-cp -r yk-dev-pipeline-skills/plugins/yk-dev-pipeline/skills ~/.claude/skills/yk-dev-pipeline
-
-# Option 2: Install per-project
-cp -r yk-dev-pipeline-skills/plugins/yk-dev-pipeline/skills /path/to/your/project/.claude/skills/yk-dev-pipeline
-```
-
-#### Method 3: Direct Download
-
-1. Download this repository as ZIP
-2. Extract `plugins/yk-dev-pipeline/skills/` to `~/.claude/skills/yk-dev-pipeline/`
-3. Restart Claude Code
 
 ### Claude.ai Projects
 
@@ -270,22 +243,11 @@ Areas where contributions are welcome:
 This skill collection is structured as a **Claude Code plugin marketplace** repo. It can be installed via:
 
 ```bash
-/plugin marketplace add ykondrat/yk-dev-pipeline-skills
-/plugin install yk-dev-pipeline
+/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git
+/plugin install yk-dev-pipeline@yk-dev-pipeline-skills
 ```
 
-The `.claude-plugin/marketplace.json` at the repo root and `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` provide the metadata for automatic discovery and installation.
-
-### GitHub Topics Required
-Make sure your repository has these topics for automatic discovery:
-- `claude-skill`
-- `claude-code`
-- `anthropic`
-- `agent-skills`
-- `typescript`
-- `javascript`
-
-See [`.github/TOPICS.md`](.github/TOPICS.md) for complete list and instructions.
+The `.claude-plugin/marketplace.json` at the repo root defines the marketplace catalog, and `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` provides the plugin manifest. Skills are auto-discovered from the `skills/` directory within the plugin.
 
 ## Security
 
@@ -304,10 +266,3 @@ MIT — see [LICENSE](LICENSE) for details.
 ---
 
 **Built with ❤️ for developers who want AI-assisted development done right.**
-
-## Sources
-
-- [Claude Code Skills Documentation](https://code.claude.com/docs/en/skills)
-- [SkillsMP Marketplace](https://skillsmp.com/)
-- [Agent Skills Standard](https://agentskills.io/specification)
-- [Anthropic Skills Repository](https://github.com/anthropics/skills)

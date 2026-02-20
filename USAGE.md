@@ -15,8 +15,6 @@ This guide shows you how to use the skills in different environments and scenari
 
 ### Installation
 
-#### Method 1: Plugin Marketplace (Recommended)
-
 ```bash
 # Add the marketplace, then install the plugin
 /plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git
@@ -35,54 +33,29 @@ To uninstall:
 /plugin uninstall yk-dev-pipeline
 ```
 
-#### Method 2: Manual Installation
-
-```bash
-# Option 1: Install globally (for all projects)
-git clone https://github.com/ykondrat/yk-dev-pipeline-skills.git
-cp -r yk-dev-pipeline-skills/plugins/yk-dev-pipeline/skills ~/.claude/skills/yk-dev-pipeline
-
-# Option 2: Install per-project
-cp -r yk-dev-pipeline-skills/plugins/yk-dev-pipeline/skills /path/to/your/project/.claude/skills/yk-dev-pipeline
-```
-
 ### Invocation in Claude Code
 
-Claude Code automatically detects skills in `.claude/skills/`. You can invoke them:
+After installation, Claude Code automatically detects the plugin skills. You can invoke them:
 
-#### Method 1: Direct Invocation via Slash Command
+#### Slash Command
 ```bash
-# In your terminal or Claude Code chat
 /yk-dev-pipeline
-
-# Or invoke specific phases
-/yk-brainstorm
-/yk-planning
-/yk-implementation
-/yk-code-review
-/yk-testing
-/yk-documentation
 ```
 
-#### Method 2: Natural Language Trigger
-Just describe what you want and Claude will automatically detect and use the appropriate skill:
+This invokes the pipeline router, which guides you through all 6 phases. Individual phases (brainstorm, planning, etc.) are loaded on demand by the router — they are not separate slash commands.
+
+#### Natural Language Trigger
+Just describe what you want and Claude will automatically detect and use the skill:
 
 ```
-"Let's brainstorm a new feature for user authentication"
-→ Claude automatically invokes yk-brainstorm
+"Build me a REST API for a blog"
+→ Claude starts the pipeline at Phase 1 (Brainstorm)
 
 "Review this code I just wrote"
-→ Claude automatically invokes yk-code-review
+→ Claude starts at Phase 4 (Code Review)
 
 "Write tests for my API"
-→ Claude automatically invokes yk-testing
-```
-
-#### Method 3: Explicit Request
-```
-"Use the yk-dev-pipeline skill to build a REST API"
-"Run the yk-brainstorm skill for this new feature"
-"Execute yk-code-review on the current codebase"
+→ Claude starts at Phase 5 (Testing)
 ```
 
 ---
@@ -153,26 +126,21 @@ Claude will:
 
 ## Skill Invocation Methods
 
-### Automatic Triggers (Natural Language)
+### Trigger Phrases
 
-Each skill has trigger phrases in its description. Claude automatically detects:
+The pipeline skill triggers automatically on phrases like:
 
-| Skill | Trigger Phrases |
-|-------|----------------|
-| **yk-brainstorm** | "let's brainstorm", "new project", "I want to build", "help me plan" |
-| **yk-planning** | "plan this", "create a plan", "break this down", "next step" (after brainstorm) |
-| **yk-implementation** | "implement this", "start coding", "build it", "execute the plan" |
-| **yk-code-review** | "review this code", "code review", "check my code" |
-| **yk-testing** | "write tests", "testing phase", "add tests" |
-| **yk-documentation** | "write docs", "generate docs", "documentation phase" |
+| Intent | Example Phrases |
+|--------|----------------|
+| **Start pipeline** | "start a new project", "build me a...", "let's develop...", "new feature" |
+| **Brainstorm** | "let's brainstorm", "I want to build", "help me plan" |
+| **Planning** | "plan this", "break this down", "next step" (after brainstorm) |
+| **Implementation** | "implement this", "start coding", "build it" |
+| **Code Review** | "review this code", "code review", "check my code" |
+| **Testing** | "write tests", "testing phase", "add tests" |
+| **Documentation** | "write docs", "generate docs", "documentation phase" |
 
-### Explicit Skill References
-
-```
-"Use the yk-brainstorm skill to explore this idea"
-"Run yk-code-review on src/api/users.ts"
-"Execute yk-testing with >90% coverage target"
-```
+The router skill determines which phase to start based on context and your request.
 
 ### Pipeline State Awareness
 
@@ -480,7 +448,6 @@ This file helps Claude:
   - Run `/plugin list` to verify installation
   - If not listed, reinstall with `/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git` then `/plugin install yk-dev-pipeline@yk-dev-pipeline-skills`
   - Restart Claude Code after installation
-  - Alternatively, manually check `~/.claude/skills/yk-dev-pipeline/` exists
 - **Claude.ai**: Re-upload the skills folder to your project knowledge
 
 ### "Missing spec.md"
