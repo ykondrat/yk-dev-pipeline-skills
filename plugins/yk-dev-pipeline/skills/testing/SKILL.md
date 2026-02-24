@@ -1,12 +1,13 @@
 ---
 name: yk-testing
 description: >
-  Comprehensive test generation for JS/TS projects. You MUST use this after code review
-  and before documentation. Writes unit tests, integration tests, e2e/API tests, edge case
-  tests, and basic performance benchmarks. Detects the project's test runner or defaults to
-  Vitest. Targets >80% coverage on all code. Generates tests, runs them, and fixes failures
-  before reporting. Triggers on: "write tests", "testing phase", "add tests", "next step"
-  (after code review), or when pipeline-state.json shows code-review is approved.
+  Comprehensive test generation for JS/TS projects. Writes unit tests, integration tests,
+  e2e/API tests, edge case tests, and basic performance benchmarks. Detects the project's
+  test runner or defaults to Vitest. Targets >80% coverage.
+  Triggers on: "write tests", "testing phase", "add tests",
+  or when pipeline-state.json shows code-review is approved.
+  Works standalone on any codebase — does not require earlier pipeline phases.
+  NOTE: "next step" after code review is handled by the pipeline router, not this skill directly.
 metadata:
   recommended_model: sonnet
 ---

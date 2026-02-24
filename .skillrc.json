@@ -1,7 +1,7 @@
 {
   "$schema": "https://agentskills.io/schema.json",
   "name": "yk-dev-pipeline-skills",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Complete 6-phase JS/TS development pipeline for Claude Code",
   "author": "Yevhen Kondratyev",
   "license": "MIT",
@@ -13,27 +13,37 @@
   "skills": {
     "yk-dev-pipeline": {
       "entry": "plugins/yk-dev-pipeline/skills/SKILL.md",
-      "description": "Full 6-phase development pipeline router",
+      "description": "Full 6-phase JS/TS development pipeline — handles ALL development requests: new features, bug fixes, refactoring, debugging, performance optimization, tech debt. Routes to the correct phase. Use for any general development request, 'next step', 'continue', status checks, or when the user describes what to build/fix without naming a specific phase.",
       "type": "router",
       "model": "sonnet"
     },
     "yk-brainstorm": {
       "entry": "plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md",
-      "description": "Deep-dive requirements gathering",
+      "description": "Phase 1a: Deep-dive brainstorming for new features/projects. Use ONLY when user explicitly says 'brainstorm' or 'brainstorm phase'. For general 'build me...' or 'new feature' requests, use the yk-dev-pipeline router instead.",
       "type": "phase",
       "model": "opus",
       "phase": 1
     },
+    "yk-investigation": {
+      "entry": "plugins/yk-dev-pipeline/skills/investigation/SKILL.md",
+      "description": "Phase 1b: Systematic investigation for bugs and refactoring. Use ONLY when user explicitly says 'investigation phase' or 'investigate this'. For general 'fix this bug' or 'debug this' requests, use the yk-dev-pipeline router instead.",
+      "type": "phase",
+      "model": "opus",
+      "phase": "1b",
+      "references": [
+        "plugins/yk-dev-pipeline/skills/investigation/references/investigation-patterns.md"
+      ]
+    },
     "yk-planning": {
       "entry": "plugins/yk-dev-pipeline/skills/planning/SKILL.md",
-      "description": "Task breakdown and architecture planning",
+      "description": "Phase 2: Task breakdown and architecture planning. Use ONLY when user explicitly says 'planning phase' AND spec.md exists. For general 'plan this' or 'help me plan' requests, use the yk-dev-pipeline router instead.",
       "type": "phase",
       "model": "sonnet",
       "phase": 2
     },
     "yk-implementation": {
       "entry": "plugins/yk-dev-pipeline/skills/implementation/SKILL.md",
-      "description": "Code execution with quality gates",
+      "description": "Phase 3: Execute plan task by task with quality gates. Use ONLY when user explicitly says 'implementation phase' AND plan.md exists. For general 'build it' or 'start coding' requests, use the yk-dev-pipeline router instead.",
       "type": "phase",
       "model": "opus",
       "phase": 3,
@@ -48,7 +58,7 @@
     },
     "yk-code-review": {
       "entry": "plugins/yk-dev-pipeline/skills/code-review/SKILL.md",
-      "description": "18-area comprehensive code review",
+      "description": "Phase 4: Comprehensive 18-area code review. Use when user says 'code review', 'review this code', 'review my code', or 'check my code'. Works standalone on any codebase.",
       "type": "phase",
       "model": "opus",
       "phase": 4,
@@ -58,7 +68,7 @@
     },
     "yk-testing": {
       "entry": "plugins/yk-dev-pipeline/skills/testing/SKILL.md",
-      "description": "Comprehensive test generation",
+      "description": "Phase 5: Comprehensive test generation (unit, integration, e2e). Use when user says 'write tests', 'add tests', or 'testing phase'. Works standalone on any codebase.",
       "type": "phase",
       "model": "sonnet",
       "phase": 5,
@@ -68,7 +78,7 @@
     },
     "yk-documentation": {
       "entry": "plugins/yk-dev-pipeline/skills/documentation/SKILL.md",
-      "description": "Full project documentation generation",
+      "description": "Phase 6: Full project documentation generation. Use when user says 'write docs', 'generate docs', or 'documentation phase'. Works standalone on any codebase.",
       "type": "phase",
       "model": "sonnet",
       "phase": 6,

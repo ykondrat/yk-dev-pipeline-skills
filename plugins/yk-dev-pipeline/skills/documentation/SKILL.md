@@ -3,10 +3,11 @@ name: yk-documentation
 description: >
   Comprehensive documentation generation for JS/TS projects. The final step in the dev
   pipeline. Generates README, API docs, architecture docs, code-level docs, contributing
-  guide, changelog, and deployment guide — all derived from the actual code, spec, plan,
-  and test report. Detects project type and adapts format (Markdown, OpenAPI, TypeDoc).
-  Triggers on: "write docs", "documentation phase", "generate docs", "next step" (after
-  testing), or when pipeline-state.json shows testing is complete.
+  guide, changelog, and deployment guide — all derived from actual code.
+  Triggers on: "write docs", "documentation phase", "generate docs",
+  or when pipeline-state.json shows testing is complete.
+  Works standalone on any codebase — does not require earlier pipeline phases.
+  NOTE: "next step" after testing is handled by the pipeline router, not this skill directly.
 metadata:
   recommended_model: sonnet
 ---

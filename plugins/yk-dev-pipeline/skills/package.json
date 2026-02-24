@@ -1,7 +1,7 @@
 {
   "name": "yk-dev-pipeline-skills",
-  "version": "1.1.0",
-  "description": "6-phase JS/TS development pipeline for Claude Code - from brainstorm to documentation",
+  "version": "1.2.0",
+  "description": "6-phase JS/TS development pipeline for Claude Code - from brainstorm (or investigation) to documentation",
   "keywords": [
     "claude-skill",
     "claude-code",
@@ -24,25 +24,34 @@
     {
       "name": "yk-dev-pipeline",
       "path": "SKILL.md",
-      "description": "Full 6-phase development pipeline router",
+      "description": "Full 6-phase development pipeline router — entry point for all development requests",
       "phase": "all"
     },
     {
       "name": "yk-brainstorm",
       "path": "brainstorm/SKILL.md",
-      "description": "Deep-dive requirements gathering",
+      "description": "Deep-dive requirements gathering (direct: 'brainstorm phase')",
       "phase": 1
+    },
+    {
+      "name": "yk-investigation",
+      "path": "investigation/SKILL.md",
+      "description": "Systematic investigation for bugs and refactoring (direct: 'investigation phase')",
+      "phase": "1b",
+      "references": [
+        "investigation/references/investigation-patterns.md"
+      ]
     },
     {
       "name": "yk-planning",
       "path": "planning/SKILL.md",
-      "description": "Task breakdown and architecture planning",
+      "description": "Task breakdown and architecture planning (direct: 'planning phase')",
       "phase": 2
     },
     {
       "name": "yk-implementation",
       "path": "implementation/SKILL.md",
-      "description": "Code execution with quality gates",
+      "description": "Code execution with quality gates (direct: 'implementation phase')",
       "phase": 3,
       "references": [
         "implementation/references/js-ts-best-practices.md",
@@ -56,7 +65,7 @@
     {
       "name": "yk-code-review",
       "path": "code-review/SKILL.md",
-      "description": "18-area comprehensive code review",
+      "description": "18-area comprehensive code review — works standalone",
       "phase": 4,
       "references": [
         "code-review/references/review-checklists.md"
@@ -65,7 +74,7 @@
     {
       "name": "yk-testing",
       "path": "testing/SKILL.md",
-      "description": "Comprehensive test generation",
+      "description": "Comprehensive test generation — works standalone",
       "phase": 5,
       "references": [
         "testing/references/test-patterns.md"
@@ -74,7 +83,7 @@
     {
       "name": "yk-documentation",
       "path": "documentation/SKILL.md",
-      "description": "Full project documentation generation",
+      "description": "Full project documentation generation — works standalone",
       "phase": 6,
       "references": [
         "documentation/references/doc-templates.md"

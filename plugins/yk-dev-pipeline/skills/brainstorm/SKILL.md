@@ -1,13 +1,12 @@
 ---
 name: yk-brainstorm
 description: >
-  Deep-dive brainstorming skill for JavaScript/TypeScript projects. You MUST use this
-  before any creative work — creating features, building components, adding functionality,
-  or modifying behavior. Explores user intent, requirements, and design before implementation.
-  Triggers on: "let's brainstorm", "new project", "I want to build", "help me plan",
-  "let's think through", "I have an idea for", "start the pipeline", "dev pipeline",
-  "brainstorm phase", or any time a user describes a project idea without a clear spec.
-  Also trigger when the user wants to add a significant feature to an existing project.
+  Deep-dive brainstorming skill for JavaScript/TypeScript projects. Explores requirements
+  through conversational questioning, proposes approaches with trade-offs, produces spec.md.
+  DIRECT TRIGGER: "let's brainstorm", "brainstorm phase", "brainstorm this".
+  ROUTED FROM: Pipeline router when user intent is to build something new.
+  DO NOT USE FOR: General "I want to build..." or "new feature" requests — those go through
+  the pipeline router which handles intent detection and pipeline state.
   This is the first step in the dev-pipeline skill chain.
 metadata:
   recommended_model: opus

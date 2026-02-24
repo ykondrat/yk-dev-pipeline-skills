@@ -1,14 +1,15 @@
 ---
 name: yk-code-review
 description: >
-  Strict, comprehensive code review for JS/TS projects. You MUST use this after implementation
-  and before testing. Reviews all code against the spec, plan, and best practices across 18
-  review areas — correctness, security, performance, TypeScript, style, architecture, error
-  handling, YAGNI, documentation, spec/plan compliance, concurrency, logging, API design,
-  configuration, dependencies, migrations, and accessibility. Produces a review report with
-  a prioritized fix plan. Triggers on: "review this code", "code review", "review phase",
-  "check my code", "next step" (after implementation), or when pipeline-state.json shows
-  implementation is complete.
+  Strict, comprehensive code review for JS/TS projects. Reviews all code against the spec,
+  plan, and best practices across 18 review areas — correctness, security, performance,
+  TypeScript, style, architecture, error handling, YAGNI, documentation, spec/plan compliance,
+  concurrency, logging, API design, configuration, dependencies, migrations, and accessibility.
+  Produces a review report with a prioritized fix plan.
+  Triggers on: "review this code", "code review", "review phase", "check my code",
+  or when pipeline-state.json shows implementation is complete.
+  Works standalone on any codebase — does not require earlier pipeline phases.
+  NOTE: "next step" after implementation is handled by the pipeline router, not this skill directly.
 metadata:
   recommended_model: opus
 ---

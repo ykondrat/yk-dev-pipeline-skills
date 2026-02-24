@@ -84,11 +84,12 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ### How to Bump Versions
 
-When making changes, update the version in **all three locations**:
+When making changes, update the version in **all four locations**:
 
 1. `.claude-plugin/marketplace.json` → `metadata.version` and `plugins[0].version`
 2. `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` → `version`
 3. `.skillrc.json` → `version`
+4. `plugins/yk-dev-pipeline/skills/package.json` → `version`
 
 ### For Users: Updating Installed Plugins
 

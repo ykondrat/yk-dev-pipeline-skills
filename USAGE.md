@@ -45,17 +45,23 @@ After installation, Claude Code automatically detects the plugin skills. You can
 This invokes the pipeline router, which guides you through all 6 phases. Individual phases (brainstorm, planning, etc.) are loaded on demand by the router — they are not separate slash commands.
 
 #### Natural Language Trigger
-Just describe what you want and Claude will automatically detect and use the skill:
+Just describe what you want — the Router detects your intent and routes to the correct phase:
 
 ```
 "Build me a REST API for a blog"
-→ Claude starts the pipeline at Phase 1 (Brainstorm)
+→ Router detects build-something intent → Phase 1a (Brainstorm)
+
+"Fix this bug in the auth module"
+→ Router detects fix-something intent → Phase 1b (Investigation)
 
 "Review this code I just wrote"
-→ Claude starts at Phase 4 (Code Review)
+→ Phase 4 (Code Review) — works standalone
 
 "Write tests for my API"
-→ Claude starts at Phase 5 (Testing)
+→ Phase 5 (Testing) — works standalone
+
+"Next step" / "Continue"
+→ Router reads pipeline-state.json → routes to next incomplete phase
 ```
 
 ---
@@ -72,8 +78,9 @@ Just describe what you want and Claude will automatically detect and use the ski
 You have access to the YK Dev Pipeline skills in your project knowledge.
 
 Available skills:
-- yk-dev-pipeline (router - start here)
-- yk-brainstorm (Phase 1: Requirements)
+- yk-dev-pipeline (router - start here for all requests)
+- yk-brainstorm (Phase 1a: Requirements for new features)
+- yk-investigation (Phase 1b: Bug fixes, refactoring, performance)
 - yk-planning (Phase 2: Task breakdown)
 - yk-implementation (Phase 3: Code writing)
 - yk-code-review (Phase 4: Review)
@@ -128,21 +135,40 @@ Claude will:
 
 ### Trigger Phrases
 
-The pipeline skill triggers automatically on phrases like:
+The pipeline uses a **router-first** architecture. Most requests go through the Router, which detects intent and routes to the correct phase. Phases 4-6 also work as standalone triggers.
 
-| Intent | Example Phrases |
-|--------|----------------|
-| **Start pipeline** | "start a new project", "build me a...", "let's develop...", "new feature" |
-| **Brainstorm** | "let's brainstorm", "I want to build", "help me plan" |
-| **Planning** | "plan this", "break this down", "next step" (after brainstorm) |
-| **Implementation** | "implement this", "start coding", "build it" |
-| **Fix (review)** | "fix the issues", "address the feedback", "fix review findings" |
-| **Fix (tests)** | "fix failing tests", "fix test failures" |
-| **Code Review** | "review this code", "code review", "check my code" |
-| **Testing** | "write tests", "testing phase", "add tests" |
-| **Documentation** | "write docs", "generate docs", "documentation phase" |
+#### Router-Handled Triggers
 
-The router skill determines which phase to start based on context and your request.
+| Intent | Example Phrases | Routes To |
+|--------|----------------|-----------|
+| **Build something** | "build me a...", "I want to build", "new feature", "new project" | Brainstorm (1a) |
+| **Fix/debug/refactor** | "fix this bug", "debug this", "refactor", "performance issue", "tech debt" | Investigation (1b) |
+| **Continue pipeline** | "next step", "continue", "go ahead" | Next incomplete phase |
+| **Check status** | "what's the status?", "where are we?" | Pipeline state summary |
+| **Fix (review)** | "fix the issues", "address the feedback" | Implementation (fix mode) |
+| **Fix (tests)** | "fix failing tests", "fix test failures" | Implementation (test-fix mode) |
+
+#### Direct Phase Triggers
+
+| Phase | Direct Triggers | Notes |
+|-------|----------------|-------|
+| **1a. Brainstorm** | "brainstorm", "brainstorm phase", "let's brainstorm" | Explicit name only |
+| **1b. Investigation** | "investigation phase", "investigate this" | Explicit name only |
+| **2. Planning** | "planning phase", "create a plan" | Requires spec.md |
+| **3. Implementation** | "implementation phase", "execute the plan" | Requires plan.md |
+| **4. Code Review** | "review this code", "code review", "check my code" | Works standalone |
+| **5. Testing** | "write tests", "add tests", "testing phase" | Works standalone |
+| **6. Documentation** | "write docs", "generate docs", "documentation phase" | Works standalone |
+
+### How the Router Decides
+
+The Router applies these rules in order:
+
+1. **Pipeline state takes priority.** If `pipeline-state.json` exists with an active pipeline, check if the request relates to the current pipeline before starting a new one.
+2. **Build-something intent → Brainstorm.** Keywords: "build", "create", "develop", "new feature", "new project", "add a feature", "I want to make".
+3. **Fix-something intent → Investigation.** Keywords: "fix", "bug", "broken", "debug", "refactor", "slow", "performance", "tech debt", "optimize", "root cause".
+4. **Explicit phase name → that phase directly.** "brainstorm" → Brainstorm, "investigate" → Investigation, "plan" → Planning, etc.
+5. **Has artifacts → skip to appropriate phase.** User provides spec → Planning. User provides plan → Implementation. Code exists but no spec/plan → Code-Review, Testing, or Documentation as requested.
 
 ### Pipeline State Awareness
 
@@ -158,6 +184,23 @@ Skills automatically check `pipeline-state.json`:
 "Skip to testing"
 → Claude jumps to Phase 5 but notes skipped phases
 ```
+
+### Continuation Logic
+
+When you say "next step", "continue", or "go ahead", the Router reads `pipeline-state.json` and routes to the next action:
+
+| Current State | Next Action |
+|---------------|-------------|
+| No pipeline-state.json | Ask: new project (brainstorm) or investigate existing code? |
+| brainstorm/investigation: completed, planning: pending | Start Planning |
+| planning: completed, implementation: pending | Start Implementation |
+| implementation: completed, code-review: pending | Start Code-Review |
+| code-review: completed (approved), testing: pending | Start Testing |
+| code-review: blocked | Start Implementation (fix mode — reads fix-plan.md) |
+| testing: completed, documentation: pending | Start Documentation |
+| testing: blocked | Start Implementation (test-fix mode — reads fix-test-plan.md) |
+| documentation: completed | Pipeline complete — summarize and suggest new work |
+| Any phase: in-progress | Resume that phase |
 
 ---
 

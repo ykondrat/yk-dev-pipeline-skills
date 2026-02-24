@@ -1,12 +1,13 @@
 ---
 name: yk-dev-pipeline
 description: >
-  Full JS/TS development pipeline with 6 phases: brainstorm, planning, implementation,
-  code-review, testing, and documentation. Use this for any new JS/TS project or feature.
-  Each phase produces artifacts consumed by the next. Semi-automatic — suggests the next
-  step, user confirms. Triggers on: "start a new project", "build me a...", "let's develop...",
-  "new feature", "start pipeline", or any request to build a JS/TS application or feature
-  from scratch.
+  Full JS/TS development pipeline with 6 phases: brainstorm (or investigation), planning,
+  implementation, code-review, testing, and documentation. Use this for any JS/TS project,
+  feature, bug fix, or refactoring. Each phase produces artifacts consumed by the next.
+  Semi-automatic — suggests the next step, user confirms. Triggers on: "start a new project",
+  "build me a...", "let's develop...", "new feature", "start pipeline", "fix this bug",
+  "debug this", "investigate", "refactor", "performance issue", "tech debt", or any request
+  to build, fix, or improve a JS/TS application.
 metadata:
   recommended_model: sonnet
 ---
@@ -20,23 +21,36 @@ and reference materials.
 ## Pipeline Overview
 
 ```
-[1. Brainstorm] → [2. Planning] → [3. Implementation] → [4. Code Review] → [5. Testing] → [6. Documentation]
-       ↓                ↓                 ↓                    ↓                  ↓                ↓
-    spec.md          plan.md         working code        review.md + fix-plan   test-report.md    README + docs/
-                                                              ↓ (if blocked)
-                                                         back to Implementation
+[1a. Brainstorm] ─┐
+                  ├→ [2. Planning] → [3. Implementation] → [4. Code Review] → [5. Testing] → [6. Documentation]
+[1b. Investigation]┘       ↓                 ↓                    ↓                  ↓                ↓
+                        plan.md         working code        review.md + fix-plan   test-report.md    README + docs/
+       ↓                                                         ↓ (if blocked)
+    spec.md                                                 back to Implementation
 ```
+
+Phase 1 has two alternatives:
+- **Brainstorm** — for new features, new projects, adding functionality
+- **Investigation** — for bug fixes, refactoring, performance issues, tech debt
 
 ## How to Use
 
-### Starting a New Project
+### Starting Phase 1
 
-When the user wants to build something, start at Phase 1 (Brainstorm). Read the
-brainstorm skill and follow its process:
+Detect the user's intent and route to the correct Phase 1 skill:
 
+**New feature / new project / adding functionality → Brainstorm:**
 ```
 Read brainstorm/SKILL.md
 ```
+
+**Bug fix / refactoring / performance / tech debt / debugging → Investigation:**
+```
+Read investigation/SKILL.md
+```
+
+Both skills produce `spec.md` as their output, so Phase 2 (Planning) works the same
+regardless of which Phase 1 was used.
 
 ### Continuing the Pipeline
 
@@ -44,7 +58,7 @@ After each phase completes, suggest the next phase. The user confirms before pro
 When moving to the next phase, read that phase's skill:
 
 ```
-Phase 1 complete → "Ready for planning? I'll break this into tasks."
+Phase 1 complete (brainstorm or investigation) → "Ready for planning? I'll break this into tasks."
   Read planning/SKILL.md
 
 Phase 2 complete → "Ready to start implementing? I'll work through the tasks."
@@ -100,6 +114,10 @@ the pipeline is and what's been completed:
 }
 ```
 
+**Note:** The first phase key is either `brainstorm` OR `investigation` — they are
+alternatives, never both. If investigation was Phase 1, the state will have an
+`investigation` key instead of `brainstorm`.
+
 ### State Validation
 
 When reading `pipeline-state.json`, validate before proceeding:
@@ -112,14 +130,61 @@ When reading `pipeline-state.json`, validate before proceeding:
   ask the user which phase they want to continue from.
 - **Out-of-order completion:** If a later phase is completed but an earlier one isn't,
   note this and ask if it's intentional (e.g., user jumped to a phase directly).
+- **Both brainstorm and investigation:** If `pipeline-state.json` contains both a
+  `brainstorm` and `investigation` key, flag this as unusual — they are alternatives.
+  Ask the user which one applies.
+
+### Continuation Logic
+
+When the user says "next step", "continue", "go ahead", or similar:
+
+1. Read `pipeline-state.json`
+2. Find `current_phase` and phase statuses
+3. Route to the next action:
+
+| Current state | Next action |
+|---|---|
+| No pipeline-state.json | Ask: new project (brainstorm) or investigate existing code? |
+| brainstorm/investigation: completed, planning: pending | Start Planning |
+| planning: completed, implementation: pending | Start Implementation |
+| implementation: completed, code-review: pending | Start Code-Review |
+| code-review: completed (approved), testing: pending | Start Testing |
+| code-review: blocked | Start Implementation (fix mode — reads fix-plan.md) |
+| testing: completed, documentation: pending | Start Documentation |
+| testing: blocked | Start Implementation (test-fix mode — reads fix-test-plan.md) |
+| documentation: completed | Pipeline complete — summarize and suggest new work |
+| Any phase: in-progress | Resume that phase |
+
+### Intent Detection Rules
+
+When routing a new user request (not "next step" / "continue"):
+
+**Rule 1 — Pipeline state takes priority.** If `pipeline-state.json` exists with an active pipeline, check if the request relates to the current pipeline before starting a new one.
+
+**Rule 2 — Build-something intent => Brainstorm.** Keywords: "build", "create", "develop", "new feature", "new project", "add a feature", "I want to make", "I have an idea".
+
+**Rule 3 — Fix-something intent => Investigation.** Keywords: "fix", "bug", "broken", "debug", "refactor", "slow", "performance", "tech debt", "optimize", "root cause", "something is wrong", "not working".
+
+**Rule 4 — Explicit phase name => that phase directly.** "brainstorm" => Brainstorm, "investigate" => Investigation, "plan" => Planning, "implement" => Implementation, "review" => Code-Review, "test" => Testing, "document"/"docs" => Documentation.
+
+**Rule 5 — Has artifacts => skip to appropriate phase.** User provides spec => Planning. User provides plan => Implementation. Code exists but no spec/plan => Code-Review, Testing, or Documentation as requested.
 
 ## Phase Summary
 
-### Phase 1: Brainstorm
+### Phase 1a: Brainstorm
 **Skill:** `brainstorm/SKILL.md`
 **Purpose:** Deep-dive into requirements through conversational questioning.
 **Output:** `spec.md` (concise summary) + detailed design doc
 **Key:** One question at a time, checks existing project context first, proposes approaches with trade-offs, YAGNI ruthlessly.
+**When:** New features, new projects, adding functionality.
+
+### Phase 1b: Investigation
+**Skill:** `investigation/SKILL.md`
+**Reference:** `investigation/references/investigation-patterns.md`
+**Purpose:** Systematic investigation of bugs, performance issues, refactoring needs, or tech debt.
+**Output:** `spec.md` (adapted for fixes) + investigation report
+**Key:** Reproduce first, trace root causes with evidence, multiple hypotheses, propose fix strategies with trade-offs.
+**When:** Bug fixes, refactoring, performance optimization, tech debt, debugging.
 
 ### Phase 2: Planning
 **Skill:** `planning/SKILL.md`
@@ -162,7 +227,13 @@ When reading `pipeline-state.json`, validate before proceeding:
 
 | User says | Action |
 |---|---|
-| "Build me a REST API for..." | Start Phase 1 (Brainstorm) |
+| "Build me a REST API for..." | Start Phase 1a (Brainstorm) |
+| "I want to build..." / "New feature" | Start Phase 1a (Brainstorm) |
+| "Fix this bug" / "Debug this" | Start Phase 1b (Investigation) |
+| "Refactor this" / "Clean up this code" | Start Phase 1b (Investigation) |
+| "Performance issue" / "This is slow" | Start Phase 1b (Investigation) |
+| "Investigate" / "Find the root cause" | Start Phase 1b (Investigation) |
+| "Tech debt" / "Why is this broken?" | Start Phase 1b (Investigation) |
 | "I have a spec, let's plan" | Start Phase 2 (Planning), read their spec |
 | "Here's my plan, start coding" | Start Phase 3 (Implementation), read their plan |
 | "Review this code" | Start Phase 4 (Code Review) |

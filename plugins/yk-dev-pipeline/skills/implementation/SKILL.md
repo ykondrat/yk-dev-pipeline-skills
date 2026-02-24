@@ -1,14 +1,15 @@
 ---
 name: yk-implementation
 description: >
-  Executes implementation plans task by task for JS/TS projects. You MUST use this after
-  planning and before code review. Reads plan.md and works through tasks in batches with
-  review checkpoints, quality gates, and self-review — writing production-quality code.
+  Executes implementation plans task by task for JS/TS projects. Reads plan.md and works
+  through tasks in batches with review checkpoints, quality gates, and self-review.
   Also reads fix-plan.md (from code review) and fix-test-plan.md (from testing) when
-  looping back to fix issues. Triggers on: "implement this", "start coding", "build it",
-  "implementation phase", "execute the plan", "start building", "next step" (after planning),
-  or when pipeline-state.json shows planning is complete and implementation is pending.
-  Also use when the user has a plan.md and wants to start writing code.
+  looping back to fix issues.
+  DIRECT TRIGGER: "implementation phase", "execute the plan" (when plan.md exists).
+  ROUTED FROM: Pipeline router after planning completes.
+  PREREQUISITE: plan.md must exist from Phase 2.
+  DO NOT USE FOR: General "build it" or "start coding" without a plan — route through
+  the pipeline router instead.
 metadata:
   recommended_model: opus
 ---
@@ -24,11 +25,11 @@ the plan exactly, verify as you go, and stop when blocked — never guess.
 ## Pipeline Context
 
 ```
-brainstorm → planning → [implementation] → code-review → testing → documentation
-                             ↑ you are here
+brainstorm/investigation → planning → [implementation] → code-review → testing → documentation
+                                           ↑ you are here
 ```
 
-**Input:** `plan.md` (task breakdown), `spec.md` (requirements), optionally design docs, `fix-plan.md` (from code review), `fix-test-plan.md` (from testing).
+**Input:** `plan.md` (task breakdown), `spec.md` (requirements), design doc (`docs/plans/*-design.md`) or investigation report (`docs/plans/*-investigation.md`) from Phase 1, `fix-plan.md` (from code review), `fix-test-plan.md` (from testing).
 **Output:** Working code, installed dependencies, verified acceptance criteria, passing build.
 
 ---
@@ -63,7 +64,7 @@ Before writing a single line of code:
 
 - Read `plan.md` completely — every task, dependency, and acceptance criterion
 - Read `spec.md` — understand the requirements you're implementing
-- Read the design doc if it exists — understand architectural decisions
+- Read the design doc or investigation report from Phase 1 (path is in `phases.brainstorm.outputs` or `phases.investigation.outputs` in `pipeline-state.json`) — this contains detailed architecture decisions, trade-off reasoning, root cause analysis, and context that `spec.md` intentionally condenses. **Read whichever exists — it is essential context.**
 - Read `fix-plan.md` if it exists — code review findings that need fixing
 - Read `fix-test-plan.md` if it exists — test failures that need production code changes
 - Read `pipeline-state.json` — confirm planning is complete (or check if returning from code-review/testing)

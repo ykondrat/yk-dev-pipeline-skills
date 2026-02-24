@@ -7,7 +7,7 @@
 A comprehensive 6-phase development pipeline that turns Claude into a senior engineering team. From idea to production-ready, tested, documented code — using structured AI skills.
 
 ```
-Brainstorm → Planning → Implementation → Code Review → Testing → Documentation
+Brainstorm/Investigation → Planning → Implementation → Code Review → Testing → Documentation
 ```
 
 ## What Is This?
@@ -19,6 +19,7 @@ A collection of **Claude AI skills** (structured instruction files) that guide C
 ## Features
 
 - 🧠 **Brainstorm** — Deep-dive requirements gathering with conversational questioning
+- 🔎 **Investigation** — Systematic debugging, root cause analysis, refactoring assessment, performance investigation
 - 📋 **Planning** — Task breakdown with dependencies, acceptance criteria, file structure, and archived plans in `docs/plans/`
 - ⚡ **Implementation** — Batch execution with quality gates, tech stack detection, and self-review
 - 🔍 **Code Review** — 18-area strict review with 4-level severity and actionable fix plans
@@ -69,8 +70,9 @@ After installation, restart Claude Code to apply changes.
 You have access to the YK Dev Pipeline skills in your project knowledge.
 
 Available skills:
-- yk-dev-pipeline (router - start here)
-- yk-brainstorm (Phase 1: Requirements)
+- yk-dev-pipeline (router - start here for all requests)
+- yk-brainstorm (Phase 1a: Requirements for new features)
+- yk-investigation (Phase 1b: Bug fixes, refactoring, performance)
 - yk-planning (Phase 2: Task breakdown)
 - yk-implementation (Phase 3: Code writing)
 - yk-code-review (Phase 4: Review)
@@ -99,14 +101,16 @@ After installation, just say: **"Build me a REST API for a task management app"*
 ## Pipeline Flow
 
 ```
-┌─────────────┐     ┌──────────┐     ┌────────────────┐
-│  Brainstorm  │────▶│ Planning │────▶│ Implementation │
-│              │     │          │     │                │
-│  spec.md     │     │ plan.md  │     │  working code  │
-│  design doc  │     │ archived │     │                │
-└─────────────┘     └──────────┘     └───────┬────────┘
-                                              │
-                                              ▼
+┌──────────────┐
+│ 1a Brainstorm│──┐
+│  spec.md     │  │  ┌──────────┐     ┌────────────────┐
+│  design doc  │  ├─▶│ Planning │────▶│ Implementation │
+└──────────────┘  │  │          │     │                │
+┌──────────────┐  │  │ plan.md  │     │  working code  │
+│1b Investigate│──┘  │ archived │     │                │
+│  spec.md     │     └──────────┘     └───────┬────────┘
+│  inv. report │                               │
+└──────────────┘                               ▼
 ┌─────────────┐     ┌────────────────┐     ┌────────────────┐
 │Documentation │◀────│    Testing     │◀────│  Code Review   │
 │              │     │                │     │                │
@@ -132,12 +136,15 @@ Each phase:
 
 | Phase | Skill | What It Does | Output |
 |-------|-------|-------------|--------|
-| 1 | [Brainstorm](plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md) | Requirements gathering, approach exploration | `spec.md`, design doc |
+| 1a | [Brainstorm](plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md) | Requirements gathering, approach exploration | `spec.md`, design doc |
+| 1b | [Investigation](plugins/yk-dev-pipeline/skills/investigation/SKILL.md) | Debugging, root cause analysis, refactoring assessment | `spec.md`, investigation report |
 | 2 | [Planning](plugins/yk-dev-pipeline/skills/planning/SKILL.md) | Task breakdown, dependency graph | `plan.md`, `docs/plans/*-plan.md` |
 | 3 | [Implementation](plugins/yk-dev-pipeline/skills/implementation/SKILL.md) | Code writing with quality gates | Working code |
 | 4 | [Code Review](plugins/yk-dev-pipeline/skills/code-review/SKILL.md) | 18-area strict review | `review.md`, `fix-plan.md` |
 | 5 | [Testing](plugins/yk-dev-pipeline/skills/testing/SKILL.md) | Comprehensive test generation | Tests, `test-report.md`, `fix-test-plan.md` (if blocked) |
 | 6 | [Documentation](plugins/yk-dev-pipeline/skills/documentation/SKILL.md) | Full project documentation | README, API docs, etc. |
+
+> **Routing note:** The Router handles all general requests and routes to the correct phase. Phases 1a-3 only trigger on explicit phase-name mentions; Phases 4-6 also work standalone.
 
 ## Example Usage
 
@@ -183,7 +190,11 @@ yk-dev-pipeline-skills/
 │       └── skills/
 │           ├── SKILL.md                 ← Pipeline router
 │           ├── brainstorm/
-│           │   └── SKILL.md             ← Phase 1
+│           │   └── SKILL.md             ← Phase 1a
+│           ├── investigation/
+│           │   ├── SKILL.md             ← Phase 1b
+│           │   └── references/
+│           │       └── investigation-patterns.md
 │           ├── planning/
 │           │   └── SKILL.md             ← Phase 2
 │           ├── implementation/
@@ -209,6 +220,7 @@ yk-dev-pipeline-skills/
 │                   └── doc-templates.md
 ├── examples/
 │   ├── pipeline-state.example.json
+│   ├── pipeline-state-investigation.example.json
 │   ├── plan.example.md
 │   ├── review.example.md
 │   ├── fix-plan.example.md
@@ -240,6 +252,7 @@ Claude AI skills are markdown files with structured instructions. When Claude re
 3. **Artifact chaining** — Each phase produces files (spec.md, plan.md, etc.) that the next phase reads. Plans and design docs are also archived in `docs/plans/` with date prefixes
 4. **State tracking** — `pipeline-state.json` tracks progress across phases
 5. **Human in the loop** — Claude suggests the next phase, but waits for user confirmation
+6. **Router-first routing** — The pipeline router handles all general requests ("build me...", "fix this bug", "next step") and routes to the correct phase using intent detection rules and pipeline state. Individual phases only trigger on explicit phase-name mentions.
 
 ## Contributing
 

@@ -1,13 +1,14 @@
 ---
 name: yk-planning
 description: >
-  Turns brainstorm specs into detailed, actionable implementation plans for JS/TS projects.
-  You MUST use this after brainstorming and before writing any code. Breaks down the spec
-  into ordered tasks, defines file structure, identifies dependencies, and creates a step-by-step
-  plan that the implementation skill can follow mechanically. Triggers on: "plan this",
-  "create a plan", "planning phase", "break this down", "implementation plan", "next step"
-  (after brainstorm), or when pipeline-state.json shows brainstorm is complete and planning
-  is pending. Also use when a user has a spec or design doc and wants to plan the build.
+  Turns brainstorm or investigation specs into detailed, actionable implementation plans
+  for JS/TS projects. Breaks down the spec into ordered tasks, defines file structure,
+  identifies dependencies, and creates a step-by-step plan.
+  DIRECT TRIGGER: "planning phase", "create a plan" (when spec.md exists).
+  ROUTED FROM: Pipeline router after brainstorm or investigation completes.
+  PREREQUISITE: spec.md must exist from Phase 1.
+  DO NOT USE FOR: General "help me plan" or "plan this" without a spec — route through
+  the pipeline router instead.
 metadata:
   recommended_model: sonnet
 ---
@@ -21,11 +22,11 @@ that's concrete enough for the implementation phase to follow without guesswork.
 ## Pipeline Context
 
 ```
-brainstorm → [planning] → implementation → code-review → testing → documentation
+brainstorm/investigation → [planning] → implementation → code-review → testing → documentation
                 ↑ you are here
 ```
 
-**Input:** `spec.md` and optionally `docs/plans/*-design.md` from the brainstorm phase.
+**Input:** `spec.md` + the full design doc (`docs/plans/*-design.md`) or investigation report (`docs/plans/*-investigation.md`) from Phase 1. Both are required inputs — `spec.md` is the condensed summary, the design/investigation doc contains the detailed reasoning, trade-offs, and context that inform task decomposition.
 **Output:** `plan.md` (project root) + `docs/plans/YYYY-MM-DD-{topic}-plan.md` (archived copy) — a detailed implementation plan with tasks, file structure, and dependencies.
 
 ---
@@ -51,14 +52,17 @@ implementation when writing actual database code.
 
 Before doing anything:
 
-- Read `spec.md` and the full design doc if it exists
-- Read `pipeline-state.json` to confirm brainstorm is complete
+- Read `pipeline-state.json` to confirm brainstorm or investigation is complete
+- Read the Phase 1 outputs listed in `pipeline-state.json`:
+  - `spec.md` — the condensed spec summary
+  - The full design doc or investigation report (path is in `phases.brainstorm.outputs` or `phases.investigation.outputs`) — this contains the detailed architecture decisions, trade-off reasoning, user stories, edge cases, and security considerations that `spec.md` intentionally condenses. **You must read this file — it is essential context for creating a thorough plan.**
 - Examine any existing project files (package.json, src/, tsconfig, etc.)
 - If the spec references existing code, read the relevant files to understand current patterns
 
-If `spec.md` doesn't exist or brainstorm isn't marked complete, tell the user:
-> "I don't see a completed spec from the brainstorm phase. Want me to start brainstorming
-> first, or do you have a spec you'd like me to work from?"
+If `spec.md` doesn't exist or neither brainstorm nor investigation is marked complete, tell the user:
+> "I don't see a completed spec from the brainstorm or investigation phase. Want me to
+> start brainstorming (for new features) or investigating (for bugs/refactoring) first,
+> or do you have a spec you'd like me to work from?"
 
 ### Step 2: Identify the Building Blocks
 
@@ -90,7 +94,7 @@ Based on the architecture, propose the complete file/folder structure:
 ├── tests/
 │   └── {mirrors src structure}
 ├── docs/
-│   └── plans/                # Design docs from brainstorm
+│   └── plans/                # Design docs from brainstorm or investigation reports
 └── {config files as needed}
 ```
 
@@ -174,7 +178,7 @@ Create the `docs/plans/` directory if it doesn't exist.
 - **Total tasks**: {count}
 - **Estimated phases**: {count}
 - **Spec reference**: [spec.md](spec.md)
-- **Design reference**: [design doc](docs/plans/YYYY-MM-DD-{topic}-design.md)
+- **Phase 1 reference**: [design doc](docs/plans/YYYY-MM-DD-{topic}-design.md) or [investigation report](docs/plans/YYYY-MM-DD-{topic}-investigation.md)
 
 ## File Structure
 {the agreed-upon file/folder tree}
