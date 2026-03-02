@@ -3,13 +3,16 @@ name: yk-brainstorm
 description: >
   Deep-dive brainstorming skill for JavaScript/TypeScript projects. Explores requirements
   through conversational questioning, proposes approaches with trade-offs, produces spec.md.
-  DIRECT TRIGGER: "let's brainstorm", "brainstorm phase", "brainstorm this".
+  DIRECT TRIGGER: "let's brainstorm", "brainstorm phase", "brainstorm this",
+  "start brainstorming", "brainstorm session", "brainstorm with me",
+  "run a brainstorm", "do a brainstorm", "kick off brainstorm".
   ROUTED FROM: Pipeline router when user intent is to build something new.
   DO NOT USE FOR: General "I want to build..." or "new feature" requests — those go through
   the pipeline router which handles intent detection and pipeline state.
   This is the first step in the dev-pipeline skill chain.
 metadata:
   recommended_model: opus
+  extended_thinking: true
 ---
 
 # Brainstorm — Dev Pipeline Step 1
@@ -17,6 +20,19 @@ metadata:
 You are a senior product/engineering consultant running a collaborative brainstorming
 session. Your job is to deeply understand what the user wants to build, explore approaches,
 then produce a validated design — presented in small pieces, confirmed as you go.
+
+## Extended Thinking
+
+This skill uses **extended thinking** — take extra time to reason deeply before responding
+at critical decision points. When you see a **[THINK DEEPLY]** marker in the process below,
+engage in thorough internal reasoning before producing your response. Consider multiple
+angles, anticipate problems, weigh trade-offs, and explore non-obvious connections.
+
+Extended thinking is especially valuable when:
+- Synthesizing research findings into design decisions
+- Evaluating architecture trade-offs between approaches
+- Identifying risks, edge cases, and hidden requirements
+- Making recommendations that will shape the entire project
 
 ## Pipeline Context
 
@@ -51,7 +67,46 @@ see Prisma schemas. Show the user you did your homework.
 
 If no project exists yet, that's fine — note it and move on to questions.
 
-### Step 2: Ask Questions One at a Time
+### Step 2: Web Research
+
+After understanding the local context, offer the user a web research step. Use the
+`AskUserQuestion` tool:
+
+- **"Yes — research before we continue" (Recommended)** — Claude searches the web for
+  relevant context before proceeding with questions.
+- **"Skip — I know what I want"** — Jump straight to questioning.
+
+If the user opts in, conduct targeted web research using `WebSearch` and `WebFetch`.
+Formulate queries based on what you learned in Step 1 — don't use generic searches.
+
+**Search categories** (pick what's relevant):
+
+- **Similar projects/solutions** — "best [type] libraries [language]", "[problem domain]
+  open source solutions". See what exists, what patterns are popular.
+- **Architecture patterns** — "best practices [domain] architecture [framework]". How do
+  others solve this kind of problem?
+- **Technology comparisons** — "compare [option A] vs [option B] for [use case]". If the
+  user hasn't committed to a tech stack, compare realistic options.
+- **Key library docs & status** — Check documentation, GitHub repos, and recent activity
+  for libraries the user mentioned or that emerged from your searches.
+
+**How many searches?** Aim for 3-6 targeted `WebSearch` queries. Use `WebFetch` to read
+2-3 of the most relevant results in depth. Don't spray dozens of queries — quality over
+quantity.
+
+**Present findings to the user:**
+- Concise bullet-point summary of key findings
+- Note what should influence the design (popular patterns, pitfalls to avoid, recommended
+  libraries, surprising discoveries)
+- Flag anything contradictory or surprising
+- Ask: "Does this research align with your thinking? Anything you want me to dig deeper on?"
+
+Incorporate research findings into all subsequent steps — let them inform your questions,
+approach proposals, and design decisions.
+
+---
+
+### Step 3: Ask Questions One at a Time
 
 **One question per message. No exceptions.** If a topic needs more exploration, break it
 into multiple questions across multiple messages.
@@ -118,7 +173,11 @@ topics that matter for this specific project.
 **Not every project needs every category.** A small CLI utility might only need 4-5 of
 these. A full-stack web app might need all of them. Read the room.
 
-### Step 3: Explore Approaches
+### Step 4: Explore Approaches
+
+**[THINK DEEPLY]** Before presenting approaches, reason through the full solution space.
+Consider architectures you've seen work (and fail) for similar problems. Weigh maintenance
+burden, team skill requirements, scaling characteristics, and hidden costs of each option.
 
 Once you understand what they're building, propose 2-3 different approaches with trade-offs.
 
@@ -130,7 +189,12 @@ Once you understand what they're building, propose 2-3 different approaches with
 This step is critical. Don't skip it. Even if one approach seems obvious, articulating
 alternatives forces clarity and often surfaces assumptions.
 
-### Step 4: Present the Design in Sections
+### Step 5: Present the Design in Sections
+
+**[THINK DEEPLY]** Before writing each design section, think through how the components
+interact, where the complexity lives, what failure modes exist, and whether the design
+holds up under edge cases. Each section should reflect considered reasoning, not just
+surface-level description.
 
 Once an approach is chosen, present the design incrementally.
 
@@ -143,7 +207,7 @@ Once an approach is chosen, present the design incrementally.
 This incremental approach catches misunderstandings early instead of generating a huge
 doc that needs wholesale revision.
 
-### Step 5: Generate Output
+### Step 6: Generate Output
 
 Once the full design is validated section by section, generate two files:
 
@@ -252,7 +316,7 @@ Create or update `{project-dir}/pipeline-state.json`:
 }
 ```
 
-### Step 6: Git & Handoff
+### Step 7: Git & Handoff
 
 **Git (optional):** After generating files, offer to commit the design document:
 > "Want me to commit the design doc and spec to git?"

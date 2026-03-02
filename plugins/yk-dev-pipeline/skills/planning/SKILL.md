@@ -4,7 +4,10 @@ description: >
   Turns brainstorm or investigation specs into detailed, actionable implementation plans
   for JS/TS projects. Breaks down the spec into ordered tasks, defines file structure,
   identifies dependencies, and creates a step-by-step plan.
-  DIRECT TRIGGER: "planning phase", "create a plan" (when spec.md exists).
+  DIRECT TRIGGER: "planning phase", "create a plan", "start planning",
+  "write a plan", "make a plan", "plan this out", "planning mode",
+  "do the planning", "run the planning phase",
+  "break this into tasks", "create a task list", "task breakdown".
   ROUTED FROM: Pipeline router after brainstorm or investigation completes.
   PREREQUISITE: spec.md must exist from Phase 1.
   DO NOT USE FOR: General "help me plan" or "plan this" without a spec — route through
@@ -33,16 +36,14 @@ brainstorm/investigation → [planning] → implementation → code-review → t
 
 ## References
 
-When making architecture and technology decisions during planning, consult the best
-practices reference (path relative to the skills root):
+When making architecture and technology decisions during planning, you MUST use the Read
+tool to load the best practices reference:
 
-```
-Read implementation/references/js-ts-best-practices.md
-```
+- `implementation/references/js-ts-best-practices.md` — project structure, design patterns, technology choices
 
-This helps inform decisions about project structure, design patterns, and technology
-choices. You don't need the database references at this stage — those are loaded during
-implementation when writing actual database code.
+This helps inform decisions about architecture and patterns. You don't need the database
+references at this stage — those are loaded during implementation when writing actual
+database code.
 
 ---
 

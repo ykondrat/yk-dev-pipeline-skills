@@ -5,6 +5,11 @@ description: >
   pipeline. Generates README, API docs, architecture docs, code-level docs, contributing
   guide, changelog, and deployment guide — all derived from actual code.
   Triggers on: "write docs", "documentation phase", "generate docs",
+  "write documentation", "create docs", "document this", "doc this", "doc it",
+  "add documentation", "update the docs", "generate documentation",
+  "write a README", "update the README", "create API docs", "document the API",
+  "add JSDoc", "document the code", "start documentation",
+  "we need docs", "this needs documentation", "architecture docs",
   or when pipeline-state.json shows testing is complete.
   Works standalone on any codebase — does not require earlier pipeline phases.
   NOTE: "next step" after testing is handled by the pipeline router, not this skill directly.
@@ -37,16 +42,11 @@ and TypeDoc config.
 
 ## References
 
-Before generating documentation, load the templates reference
-(path relative to the skills root):
+**STOP — you MUST load references before generating documentation.** Use the Read tool to
+read the file below. Do not skip this step.
 
-```
-Read documentation/references/doc-templates.md
-```
-
-This file contains full templates for all 7 doc types: README, API docs (OpenAPI + Markdown),
-architecture (with Mermaid diagrams), code-level docs (JSDoc + TypeDoc), contributing guide,
-changelog, and deployment guide.
+**Always load (mandatory):**
+- `documentation/references/doc-templates.md` — full templates for all 7 doc types: README, API docs (OpenAPI + Markdown), architecture (with Mermaid diagrams), code-level docs (JSDoc + TypeDoc), contributing guide, changelog, and deployment guide
 
 ---
 

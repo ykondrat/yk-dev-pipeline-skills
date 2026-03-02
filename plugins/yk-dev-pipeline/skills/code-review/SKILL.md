@@ -7,6 +7,11 @@ description: >
   concurrency, logging, API design, configuration, dependencies, migrations, and accessibility.
   Produces a review report with a prioritized fix plan.
   Triggers on: "review this code", "code review", "review phase", "check my code",
+  "review my code", "look at my code", "critique this code",
+  "review the implementation", "review the changes", "review this PR",
+  "do a code review", "run a code review", "start code review",
+  "check this implementation", "audit this code", "find issues in this code",
+  "is this code okay", "give me feedback on this code", "review it", "check it",
   or when pipeline-state.json shows implementation is complete.
   Works standalone on any codebase — does not require earlier pipeline phases.
   NOTE: "next step" after implementation is handled by the pipeline router, not this skill directly.
@@ -29,14 +34,22 @@ comprehensive review report and prioritized fix plan.
 
 ## References
 
-**Before reviewing, load the detailed checklists
-(path relative to the skills root):**
-```
-Read code-review/references/review-checklists.md
-```
-This file contains deep, per-area checklists with examples and severity tables pulled from
-specialized security, performance, concurrency, API, database, logging, config, dependency,
-migration, accessibility, error handling, and test review methodologies.
+**STOP — you MUST load references before starting the review.** Use the Read tool to read
+each file listed below. Do not skip this step — the review checklists define what to check,
+and the shared implementation references ensure you apply the same quality standards the
+implementer was held to.
+
+**Always load (mandatory):**
+- `code-review/references/review-checklists.md` — per-area checklists with examples and severity tables for all 18 review areas
+- `implementation/references/clean-code-principles.md` — naming, functions, comments, error handling, classes, boundaries, formatting, code smells (same standards used during implementation)
+- `implementation/references/js-ts-best-practices.md` — TypeScript patterns, Node.js patterns, security, performance (same standards used during implementation)
+
+**Load if applicable to the project's stack:**
+- `implementation/references/databases-sql.md` — if project uses PostgreSQL, MySQL, or SQLite
+- `implementation/references/databases-nosql.md` — if project uses MongoDB or DynamoDB
+- `implementation/references/databases-redis.md` — if project uses Redis
+- `implementation/references/frameworks-web.md` — if project uses Express, Fastify, Hono, or Next.js API
+- `implementation/references/frameworks-frontend.md` — if project builds a frontend (React, Next.js, Vue)
 
 ## Pipeline Context
 

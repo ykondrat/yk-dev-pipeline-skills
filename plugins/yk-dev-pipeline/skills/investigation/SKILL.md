@@ -4,7 +4,9 @@ description: >
   Systematic investigation skill for bugs, refactoring, performance issues, and tech debt
   in JavaScript/TypeScript projects. Reproduces issues, traces root causes, documents
   evidence, and proposes fix strategies.
-  DIRECT TRIGGER: "investigation phase", "investigate this", "run an investigation".
+  DIRECT TRIGGER: "investigation phase", "investigate this", "run an investigation",
+  "start an investigation", "investigate the issue", "investigate the problem",
+  "do an investigation", "investigation mode", "deep investigation".
   ROUTED FROM: Pipeline router when user intent is to fix, debug, refactor, or optimize.
   DO NOT USE FOR: General "fix this bug" or "debug this" requests — those go through
   the pipeline router which handles intent detection and pipeline state.
@@ -41,14 +43,10 @@ Pipeline state is tracked in `pipeline-state.json` inside the project directory.
 
 ## References
 
-When performing root cause analysis (Step 3), load the investigation patterns reference:
+When performing root cause analysis (Step 4), you MUST use the Read tool to load the
+investigation patterns reference:
 
-```
-Read investigation/references/investigation-patterns.md
-```
-
-This contains debugging strategies, common root cause categories, refactoring analysis
-patterns, performance investigation techniques, and evidence documentation formats.
+- `investigation/references/investigation-patterns.md` — debugging strategies, common root cause categories, refactoring analysis patterns, performance investigation techniques, and evidence documentation formats
 
 ---
 
@@ -74,7 +72,49 @@ to a file. Summarize what you found:
 > tech stack, affected area, recent changes]. Let me ask some questions to understand
 > the problem better."
 
-### Step 2: Reproduce & Characterize the Problem
+### Step 2: Web Research
+
+After understanding the local context, offer the user a web research step. Use the
+`AskUserQuestion` tool:
+
+- **"Yes — research before we continue" (Recommended)** — Claude searches the web for
+  known issues, solutions, and relevant context before proceeding.
+- **"Skip — let's investigate locally"** — Jump straight to reproduction and analysis.
+
+If the user opts in, conduct targeted web research using `WebSearch` and `WebFetch`.
+Formulate queries based on what you learned in Step 1 — use actual library names, error
+messages, and version numbers from the project.
+
+**Search categories** (pick what's relevant):
+
+- **Known issues with dependencies** — "[library] [version] known issues", "[library]
+  breaking changes [version]". Check if this is a documented problem.
+- **Error-specific searches** — Search for exact error messages, stack trace patterns,
+  or error codes. Quote the error message for exact matches.
+- **Community solutions** — "[error/symptom] [framework] solution", "[library] [problem
+  description]". Look for Stack Overflow answers, GitHub issues, blog posts.
+- **Changelogs & migration guides** — "[library] changelog [version]", "[library]
+  migration guide [old version] to [new version]". Check for breaking changes.
+- **Security advisories** — "[library] CVE", "[library] security vulnerability". Only
+  if the issue might be security-related.
+
+**How many searches?** Aim for 3-6 targeted `WebSearch` queries. Use `WebFetch` to read
+2-3 of the most relevant results in depth. Don't spray dozens of queries — quality over
+quantity.
+
+**Present findings to the user:**
+- Concise bullet-point summary of key findings
+- Highlight any known issues or solutions that match the observed problem
+- Note relevant changelogs or breaking changes in project dependencies
+- Flag potential red herrings vs likely matches
+- Ask: "Does any of this look related to your issue? Want me to dig deeper on anything?"
+
+Incorporate research findings into all subsequent steps — they can narrow the
+investigation, suggest hypotheses, or confirm/rule out causes.
+
+---
+
+### Step 3: Reproduce & Characterize the Problem
 
 **One question per message. No exceptions.** If a topic needs more exploration, break it
 into multiple questions across multiple messages.
@@ -127,13 +167,10 @@ needs fewer questions than "the app feels slow sometimes." Read the room.
 - Run the failing test or command
 - Document what you observe
 
-### Step 3: Investigate Root Cause
+### Step 4: Investigate Root Cause
 
-Now load the investigation patterns reference:
-
-```
-Read investigation/references/investigation-patterns.md
-```
+**STOP — use the Read tool now** to load `investigation/references/investigation-patterns.md`
+before proceeding. This contains the debugging strategies and root cause patterns you need.
 
 Conduct a systematic investigation:
 
@@ -161,7 +198,7 @@ Conduct a systematic investigation:
 - Evidence against it
 - How to confirm or rule it out
 
-### Step 4: Present Findings & Propose Fix Strategy
+### Step 5: Present Findings & Propose Fix Strategy
 
 Present findings incrementally — **200-300 word sections**, confirmed as you go.
 
@@ -194,7 +231,7 @@ Propose 2-3 fix approaches with trade-offs:
 
 After each section, ask: "Does this analysis look right so far?"
 
-### Step 5: Generate Output
+### Step 6: Generate Output
 
 Once the analysis is validated section by section, generate three artifacts:
 
@@ -306,7 +343,7 @@ Create or update `{project-dir}/pipeline-state.json`:
 **Note:** When investigation is Phase 1, there is no `brainstorm` key in the phases —
 they are alternatives, not sequential steps.
 
-### Step 6: Git & Handoff
+### Step 7: Git & Handoff
 
 **Git (optional):** After generating files, offer to commit the investigation report:
 > "Want me to commit the investigation report and spec to git?"

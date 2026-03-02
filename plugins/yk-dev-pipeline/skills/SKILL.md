@@ -6,8 +6,17 @@ description: >
   feature, bug fix, or refactoring. Each phase produces artifacts consumed by the next.
   Semi-automatic — suggests the next step, user confirms. Triggers on: "start a new project",
   "build me a...", "let's develop...", "new feature", "start pipeline", "fix this bug",
-  "debug this", "investigate", "refactor", "performance issue", "tech debt", or any request
-  to build, fix, or improve a JS/TS application.
+  "debug this", "investigate", "refactor", "performance issue", "tech debt",
+  "I want to build", "I need a...", "help me create", "let's make",
+  "new app", "new service", "new API", "add a feature",
+  "something is broken", "this doesn't work", "not working", "it's broken",
+  "this is slow", "this keeps failing", "there's an error",
+  "help me fix", "figure out why", "what's wrong with",
+  "clean up this code", "improve this", "modernize",
+  "start developing", "let's get started", "I have an idea for",
+  "set up a project", "scaffold", "prototype",
+  "memory leak", "crashing", "regression", "flaky",
+  or any request to build, fix, or improve a JS/TS application.
 metadata:
   recommended_model: sonnet
 ---
@@ -37,17 +46,14 @@ Phase 1 has two alternatives:
 
 ### Starting Phase 1
 
-Detect the user's intent and route to the correct Phase 1 skill:
+Detect the user's intent and route to the correct Phase 1 skill.
+Use the Read tool to load the appropriate SKILL.md:
 
 **New feature / new project / adding functionality → Brainstorm:**
-```
-Read brainstorm/SKILL.md
-```
+Use the Read tool to load `brainstorm/SKILL.md`
 
 **Bug fix / refactoring / performance / tech debt / debugging → Investigation:**
-```
-Read investigation/SKILL.md
-```
+Use the Read tool to load `investigation/SKILL.md`
 
 Both skills produce `spec.md` as their output, so Phase 2 (Planning) works the same
 regardless of which Phase 1 was used.
@@ -55,33 +61,29 @@ regardless of which Phase 1 was used.
 ### Continuing the Pipeline
 
 After each phase completes, suggest the next phase. The user confirms before proceeding.
-When moving to the next phase, read that phase's skill:
+When moving to the next phase, use the Read tool to load that phase's SKILL.md (the skill
+will instruct you to load its own references — follow those instructions):
 
-```
-Phase 1 complete (brainstorm or investigation) → "Ready for planning? I'll break this into tasks."
-  Read planning/SKILL.md
+**Phase 1 complete** (brainstorm or investigation) → "Ready for planning? I'll break this into tasks."
+→ Use the Read tool to load `planning/SKILL.md`
 
-Phase 2 complete → "Ready to start implementing? I'll work through the tasks."
-  Read implementation/SKILL.md
-  Read implementation/references/js-ts-best-practices.md
-  Read implementation/references/databases-*.md (if applicable)
+**Phase 2 complete** → "Ready to start implementing? I'll work through the tasks."
+→ Use the Read tool to load `implementation/SKILL.md` (it will tell you to load its references)
 
-Phase 3 complete → "Ready for code review? I'll review everything."
-  Read code-review/SKILL.md
-  Read code-review/references/review-checklists.md
+**Phase 3 complete** → "Ready for code review? I'll review everything."
+→ Use the Read tool to load `code-review/SKILL.md` (it will tell you to load its references)
 
-Phase 4 complete (approved) → "Ready for testing? I'll write comprehensive tests."
-  Read testing/SKILL.md
+**Phase 4 complete (approved)** → "Ready for testing? I'll write comprehensive tests."
+→ Use the Read tool to load `testing/SKILL.md` (it will tell you to load its references)
 
-Phase 4 complete (blocked) → "Issues found. I'll fix them and re-review."
-  Read implementation/SKILL.md (to execute fix-plan.md)
-  Then re-read code-review/SKILL.md (diff review)
+**Phase 4 complete (blocked)** → "Issues found. I'll fix them and re-review."
+→ Use the Read tool to load `implementation/SKILL.md` (to execute fix-plan.md)
+→ Then re-load `code-review/SKILL.md` (diff review)
 
-Phase 5 complete → "Ready for documentation? I'll generate all project docs."
-  Read documentation/SKILL.md
+**Phase 5 complete** → "Ready for documentation? I'll generate all project docs."
+→ Use the Read tool to load `documentation/SKILL.md` (it will tell you to load its references)
 
-Phase 6 complete → "Pipeline complete! Project is built, reviewed, tested, and documented."
-```
+**Phase 6 complete** → "Pipeline complete! Project is built, reviewed, tested, and documented."
 
 ### Jumping to a Specific Phase
 
@@ -161,9 +163,9 @@ When routing a new user request (not "next step" / "continue"):
 
 **Rule 1 — Pipeline state takes priority.** If `pipeline-state.json` exists with an active pipeline, check if the request relates to the current pipeline before starting a new one.
 
-**Rule 2 — Build-something intent => Brainstorm.** Keywords: "build", "create", "develop", "new feature", "new project", "add a feature", "I want to make", "I have an idea".
+**Rule 2 — Build-something intent => Brainstorm.** Keywords: "build", "create", "develop", "new feature", "new project", "add a feature", "I want to make", "I have an idea", "design", "architect", "set up", "scaffold", "bootstrap", "spin up", "prototype", "MVP", "add support for", "I need a", "let's make", "we need a", "how should we build", "from scratch", "start fresh".
 
-**Rule 3 — Fix-something intent => Investigation.** Keywords: "fix", "bug", "broken", "debug", "refactor", "slow", "performance", "tech debt", "optimize", "root cause", "something is wrong", "not working".
+**Rule 3 — Fix-something intent => Investigation.** Keywords: "fix", "bug", "broken", "debug", "refactor", "slow", "performance", "tech debt", "optimize", "root cause", "something is wrong", "not working", "error", "crash", "failing", "exception", "stack trace", "regression", "flaky", "intermittent", "memory leak", "timeout", "hanging", "bottleneck", "doesn't work", "stopped working", "keeps crashing", "what's causing", "why is this", "clean up", "modernize", "simplify", "decouple", "code smell", "hacky", "messy", "legacy", "latency", "N+1", "since upgrading".
 
 **Rule 4 — Explicit phase name => that phase directly.** "brainstorm" => Brainstorm, "investigate" => Investigation, "plan" => Planning, "implement" => Implementation, "review" => Code-Review, "test" => Testing, "document"/"docs" => Documentation.
 
@@ -175,7 +177,7 @@ When routing a new user request (not "next step" / "continue"):
 **Skill:** `brainstorm/SKILL.md`
 **Purpose:** Deep-dive into requirements through conversational questioning.
 **Output:** `spec.md` (concise summary) + detailed design doc
-**Key:** One question at a time, checks existing project context first, proposes approaches with trade-offs, YAGNI ruthlessly.
+**Key:** One question at a time, checks existing project context first, offers web research step (similar projects, best practices, library comparisons), proposes approaches with trade-offs, YAGNI ruthlessly. Uses extended thinking at critical design decisions.
 **When:** New features, new projects, adding functionality.
 
 ### Phase 1b: Investigation
@@ -183,7 +185,7 @@ When routing a new user request (not "next step" / "continue"):
 **Reference:** `investigation/references/investigation-patterns.md`
 **Purpose:** Systematic investigation of bugs, performance issues, refactoring needs, or tech debt.
 **Output:** `spec.md` (adapted for fixes) + investigation report
-**Key:** Reproduce first, trace root causes with evidence, multiple hypotheses, propose fix strategies with trade-offs.
+**Key:** Reproduce first, offers web research step (known issues, solutions, changelogs), trace root causes with evidence, multiple hypotheses, propose fix strategies with trade-offs.
 **When:** Bug fixes, refactoring, performance optimization, tech debt, debugging.
 
 ### Phase 2: Planning
@@ -195,6 +197,7 @@ When routing a new user request (not "next step" / "continue"):
 ### Phase 3: Implementation
 **Skill:** `implementation/SKILL.md`
 **References:**
+- `implementation/references/clean-code-principles.md`
 - `implementation/references/js-ts-best-practices.md`
 - `implementation/references/databases-sql.md`
 - `implementation/references/databases-nosql.md`
@@ -202,14 +205,19 @@ When routing a new user request (not "next step" / "continue"):
 
 **Purpose:** Execute the plan — write code, install deps, verify acceptance criteria.
 **Output:** Working code, passing builds
-**Key:** Critical plan review before coding, tech stack detection, batch execution (3 tasks per batch), quality gate after every batch (types + build + lint + tests), hard STOP on blockers.
+**Key:** Critical plan review before coding, tech stack detection, batch execution (3 tasks per batch), quality gate after every batch (types + build + lint + tests), hard STOP on blockers. Follows Clean Code principles (meaningful names, small functions, clean error handling, DRY, SRP). Uses extended thinking for plan review, complex code, and self-review.
 
 ### Phase 4: Code Review
 **Skill:** `code-review/SKILL.md`
-**Reference:** `code-review/references/review-checklists.md`
+**References:**
+- `code-review/references/review-checklists.md`
+- `implementation/references/clean-code-principles.md` (shared)
+- `implementation/references/js-ts-best-practices.md` (shared)
+- `implementation/references/databases-*.md` (shared, if applicable)
+- `implementation/references/frameworks-*.md` (shared, if applicable)
 **Purpose:** Strict review across 18 areas — find every issue.
 **Output:** `review.md` + `fix-plan.md`
-**Key:** 4-level verdict (Block / Request Changes / Approve+suggestions / Approve). If blocked, loops back to implementation. Diff mode for re-reviews.
+**Key:** 4-level verdict (Block / Request Changes / Approve+suggestions / Approve). If blocked, loops back to implementation. Diff mode for re-reviews. Uses same Clean Code and best-practice references as implementation for consistent standards.
 
 ### Phase 5: Testing
 **Skill:** `testing/SKILL.md`
@@ -229,21 +237,30 @@ When routing a new user request (not "next step" / "continue"):
 |---|---|
 | "Build me a REST API for..." | Start Phase 1a (Brainstorm) |
 | "I want to build..." / "New feature" | Start Phase 1a (Brainstorm) |
+| "I need a service that..." / "Let's make a..." | Start Phase 1a (Brainstorm) |
+| "Help me design a..." / "How should we build..." | Start Phase 1a (Brainstorm) |
+| "Set up a new project" / "Scaffold a..." | Start Phase 1a (Brainstorm) |
 | "Fix this bug" / "Debug this" | Start Phase 1b (Investigation) |
 | "Refactor this" / "Clean up this code" | Start Phase 1b (Investigation) |
 | "Performance issue" / "This is slow" | Start Phase 1b (Investigation) |
 | "Investigate" / "Find the root cause" | Start Phase 1b (Investigation) |
 | "Tech debt" / "Why is this broken?" | Start Phase 1b (Investigation) |
+| "Something broke" / "This stopped working" | Start Phase 1b (Investigation) |
+| "Why is this failing?" / "What's causing this?" | Start Phase 1b (Investigation) |
+| "This is flaky" / "Intermittent failures" | Start Phase 1b (Investigation) |
+| "Memory leak" / "CPU is spiking" / "Latency issues" | Start Phase 1b (Investigation) |
 | "I have a spec, let's plan" | Start Phase 2 (Planning), read their spec |
+| "Break this into tasks" / "Make a task list" | Start Phase 2 (Planning) |
 | "Here's my plan, start coding" | Start Phase 3 (Implementation), read their plan |
+| "Start building" / "Let's code this" | Start Phase 3 (Implementation) — check for plan.md |
 | "Review this code" | Start Phase 4 (Code Review) |
 | "Write tests" | Start Phase 5 (Testing) |
 | "Generate docs" | Start Phase 6 (Documentation) |
 | "Fix the review issues" / "Address the feedback" | Start Phase 3 (Implementation) in fix mode — read `fix-plan.md` |
 | "Fix the failing tests" / "Fix test failures" | Start Phase 3 (Implementation) in test-fix mode — read `fix-test-plan.md` |
 | "Continue" / "Next step" | Check pipeline-state.json, proceed to next phase |
-| "What's the status?" | Read pipeline-state.json, summarize progress |
-| "Start over" | Reset pipeline-state.json, start Phase 1 |
+| "What's the status?" / "How are we doing?" / "Where are we?" | Read pipeline-state.json, summarize progress |
+| "Start over" / "Start fresh" / "New pipeline" | Reset pipeline-state.json, start Phase 1 |
 | "Skip to testing" | Jump to Phase 5, note skipped phases |
 
 ## Important Rules

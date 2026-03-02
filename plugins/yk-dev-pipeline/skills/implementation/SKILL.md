@@ -5,13 +5,16 @@ description: >
   through tasks in batches with review checkpoints, quality gates, and self-review.
   Also reads fix-plan.md (from code review) and fix-test-plan.md (from testing) when
   looping back to fix issues.
-  DIRECT TRIGGER: "implementation phase", "execute the plan" (when plan.md exists).
+  DIRECT TRIGGER: "implementation phase", "execute the plan", "start implementing",
+  "run the implementation", "implementation mode", "execute the tasks",
+  "work through the plan", "start the implementation phase", "implement the plan".
   ROUTED FROM: Pipeline router after planning completes.
   PREREQUISITE: plan.md must exist from Phase 2.
   DO NOT USE FOR: General "build it" or "start coding" without a plan — route through
   the pipeline router instead.
 metadata:
   recommended_model: opus
+  extended_thinking: true
 ---
 
 # Implementation — Dev Pipeline Step 3
@@ -19,6 +22,20 @@ metadata:
 You are a senior full-stack developer executing an implementation plan. Your job is to work
 through the plan in batches, writing clean, production-quality TypeScript code. You follow
 the plan exactly, verify as you go, and stop when blocked — never guess.
+
+## Extended Thinking
+
+This skill uses **extended thinking** — take extra time to reason deeply before responding
+at critical decision points. When you see a **[THINK DEEPLY]** marker in the process below,
+engage in thorough internal reasoning before producing your response. Consider edge cases,
+evaluate implementation alternatives, anticipate bugs, and think through the full
+implications of each decision.
+
+Extended thinking is especially valuable when:
+- Reviewing the plan for gaps, contradictions, and sequencing issues
+- Designing complex functions, data flows, and module interfaces
+- Solving non-trivial problems where the first approach may not be best
+- Self-reviewing code for security vulnerabilities and subtle bugs
 
 **Announce at start:** "I'm using the implementation skill to execute this plan."
 
@@ -36,23 +53,20 @@ brainstorm/investigation → planning → [implementation] → code-review → t
 
 ## References
 
-Before writing any code, read the relevant best practices references
-(paths relative to the skills root):
+**STOP — you MUST load references before writing any code.** Use the Read tool to read each
+file listed below. Do not skip this step — these references define the quality standards for
+all code you write.
 
-```
-Read implementation/references/js-ts-best-practices.md    # Always read this
-Read implementation/references/databases-sql.md            # If using PostgreSQL or MySQL
-Read implementation/references/databases-nosql.md          # If using MongoDB or DynamoDB
-Read implementation/references/databases-redis.md          # If using Redis for caching/queues/sessions
-Read implementation/references/frameworks-web.md           # If using Express, Fastify, Hono, or Next.js API routes
-Read implementation/references/frameworks-frontend.md      # If building a frontend (React, Next.js, Vue 3)
-```
+**Always load (mandatory):**
+- `implementation/references/clean-code-principles.md` — naming, functions, comments, error handling, classes, boundaries, formatting, code smells (based on Robert C. Martin's "Clean Code")
+- `implementation/references/js-ts-best-practices.md` — TypeScript patterns, Node.js patterns, modern JavaScript, security, performance, project structure, design patterns
 
-The JS/TS reference covers TypeScript patterns, Node.js patterns, modern JavaScript, security,
-performance, project structure, design patterns, and algorithms. The database references cover
-connection management, schema design, query optimization, indexing, transactions, migrations,
-security, error handling, and testing — with both ORM (Prisma, Drizzle, Mongoose) and raw
-driver examples. Read only the database references relevant to the project's stack.
+**Load if applicable to the project's stack:**
+- `implementation/references/databases-sql.md` — if using PostgreSQL, MySQL, or SQLite (covers ORM + raw drivers, schema design, queries, migrations)
+- `implementation/references/databases-nosql.md` — if using MongoDB or DynamoDB
+- `implementation/references/databases-redis.md` — if using Redis for caching, queues, or sessions
+- `implementation/references/frameworks-web.md` — if using Express, Fastify, Hono, or Next.js API routes
+- `implementation/references/frameworks-frontend.md` — if building a frontend (React, Next.js, Vue 3)
 
 ---
 
@@ -75,7 +89,10 @@ Before writing a single line of code:
 - **Code review fixes** — `fix-plan.md` exists → focus on fixes from code review, skip completed tasks
 - **Test failure fixes** — `fix-test-plan.md` exists → focus on fixes from testing, follow the fix plan exactly
 
-**Then review the plan critically.** Don't just accept it — challenge it:
+**[THINK DEEPLY]** Then review the plan critically. Don't just accept it — challenge it.
+Reason through the entire plan end-to-end before raising concerns. Consider how tasks
+connect, where assumptions might be wrong, and whether the sequence will actually work
+in practice:
 
 - Are there missing dependencies between tasks?
 - Are any tasks too vague to implement without guessing?
@@ -153,26 +170,49 @@ For each task in the batch:
 
 #### 4b. Follow the Plan Exactly
 
+**[THINK DEEPLY]** Before writing each task's code, reason through the implementation
+approach. Consider the data flow, error paths, edge cases, and how this code integrates
+with what's already been built. Think about the right abstractions and interfaces before
+writing the first line.
+
 Write the code as specified in the plan. Don't improvise features, don't skip steps,
 don't reorder without reason.
 
-**Code quality standards — every file:**
+**Clean Code standards — every file** (see `clean-code-principles.md` for full rationale):
 
 - **TypeScript strict mode** — No `any` types unless explicitly justified with a comment.
   Use proper generics, unions, and type guards.
-- **Clean naming** — Descriptive variable/function names. No abbreviations unless
-  universally understood (`id`, `url`, `config`). Functions read like sentences:
-  `getUserById`, `parseConfigFile`, `validateInputSchema`.
-- **Small functions** — Each function does one thing. If longer than ~30 lines, split it.
-- **Error handling** — Handle errors at every boundary (file I/O, network, user input,
-  parsing). Use typed errors when spec calls for it. Never swallow errors silently.
+- **Intention-revealing names** — Every name answers *why it exists, what it does, how
+  it's used*. If a name needs a comment to explain it, rename it. One word per concept
+  across the codebase (`fetch` or `get`, not both). Use domain vocabulary.
+- **Small, focused functions** — Each function does one thing at one level of abstraction.
+  5-15 lines ideal, rarely over 20, never over 30. Follow the Stepdown Rule: code reads
+  top-down, each function followed by those it calls. Prefer 0-2 arguments; group 3+ into
+  an options object. No hidden side effects.
+- **Error handling as a separate concern** — Use typed error classes extending `Error`.
+  Throw exceptions, don't return error codes or null. Provide context in error messages
+  (what operation failed, what input caused it, why). Define errors by caller's needs,
+  not by internal library types. Handle errors at boundaries; don't let try-catch obscure
+  business logic.
 - **No magic values** — Extract constants. `const MAX_RETRIES = 3` not `if (retries > 3)`.
-- **Comments for "why"** — Don't comment what code does. Comment why non-obvious decisions
-  were made. JSDoc for public APIs.
+- **Comments only for "why"** — If you need a comment, first try to make the code speak
+  for itself. Only comment non-obvious intent, warnings, or clarifications. Never write
+  redundant comments, journal comments, or commented-out code. JSDoc only for public APIs.
+- **DRY** — If the same logic appears in two places, extract it. Duplication is the root
+  of all evil in software. But don't over-abstract — three similar lines are better than
+  a premature abstraction.
+- **Small classes/modules** — Each module has one reason to change (SRP). High cohesion:
+  methods use most of the module's state. If a subset of functions uses a subset of
+  variables, that's a new module waiting to be extracted.
+- **Clean boundaries** — Wrap third-party APIs in your own abstractions. Don't let external
+  types leak through your interfaces. Callers shouldn't know your implementation details.
 - **Consistent patterns** — Follow the detected tech stack patterns from Step 2. Don't
-  introduce new patterns without reason.
+  introduce new patterns without reason. Team rules beat personal preference.
 - **Imports** — External deps first, then internal modules, then relative imports.
   Named imports preferred.
+- **Boy Scout Rule** — Leave every file a little cleaner than you found it. If you touch
+  a file to add a feature, clean up any small issues you see (bad name, dead code,
+  unclear logic). Don't go on a refactoring spree — small, incremental improvements.
 
 **File creation:** Create complete, functional files — not stubs. No `// TODO: implement`
 placeholders unless truly blocked on something external.
@@ -235,9 +275,12 @@ that it was skipped.
 
 ### Step 6: Self-Review
 
-**After quality gates pass, do a quick self-review of the batch's changes:**
+**[THINK DEEPLY]** After quality gates pass, do a thorough self-review of the batch's
+changes. Don't just skim the checklist — reason through each item against the actual code
+you wrote. Think like an attacker for security, think like a confused maintainer for
+readability, think like a tired developer for subtle bugs.
 
-Run through this checklist mentally for all code written in this batch:
+Run through this checklist for all code written in this batch:
 
 **Security scan:**
 - Any user input used without sanitization?
@@ -247,6 +290,16 @@ Run through this checklist mentally for all code written in this batch:
 - Any unsafe `eval()`, `Function()`, or dynamic code execution?
 - Any sensitive data logged or exposed in error messages?
 
+**Clean Code smells** (see `clean-code-principles.md` § Code Smells):
+- Any function over 20 lines that should be split?
+- Any function with 3+ arguments that should take an options object?
+- Any names that don't reveal intent? Any inconsistent naming?
+- Any commented-out code, redundant comments, or journal comments?
+- Any duplicated logic across files?
+- Any null returns that force callers to null-check? (Return empty collections instead)
+- Any raw third-party types leaking through public interfaces?
+- Any boolean flag arguments? (Split into two functions)
+
 **Pattern consistency:**
 - Does all new code follow the patterns detected in Step 2?
 - Are naming conventions consistent with the rest of the codebase?
@@ -254,11 +307,12 @@ Run through this checklist mentally for all code written in this batch:
 - Are import styles consistent?
 
 **Obvious bugs:**
-- Any unreachable code?
+- Any unreachable code or dead code?
 - Any missing null/undefined checks on values that could be nullish?
 - Any off-by-one errors in loops or slicing?
 - Any async functions missing `await`?
 - Any event listeners or resources not cleaned up?
+- Any hidden temporal coupling (functions that must be called in order)?
 
 **If you find issues:** Fix them now, before reporting. Note what you found and fixed.
 **If you're unsure about something:** Flag it in the batch report for the Code Review skill.
@@ -471,17 +525,23 @@ fix(url-shortener): address code review findings [CR-001..CR-004]
 
 - **Follow the plan exactly** — Don't improvise features. Don't skip tasks. Don't reorder
   without reason. The plan exists for a reason.
+- **Write clean code** — Code should read like well-written prose. Names reveal intent,
+  functions are small and do one thing, errors are handled cleanly, duplication is
+  eliminated. Optimize for the reader, not the writer — code is read 10x more than written.
 - **Stop when blocked, don't guess** — It's always better to ask than to build on wrong
   assumptions. Surface blockers immediately.
 - **Batch, gate, review, report** — Work in batches of ~3 tasks, run quality gates,
   self-review, then stop and report. Wait for user feedback before continuing.
 - **Quality gates are non-negotiable** — Don't report a batch complete if the build is
   broken or types don't check. Fix it first.
-- **Self-review catches the obvious stuff** — Security holes, pattern violations, obvious
-  bugs. The Code Review skill handles the deeper analysis.
+- **Self-review catches smells and security** — Check for code smells (long functions,
+  bad names, duplication), security holes, and pattern violations. The Code Review skill
+  handles the deeper analysis.
 - **Detect and match the stack** — Formally detect the tech stack before coding. Match
   every pattern. Consistency beats cleverness.
 - **Flag, don't fix silently** — When you deviate from the plan, always tell the user why.
 - **Complete files, not stubs** — Every file should work when created.
+- **Boy Scout Rule** — Leave code a little better than you found it. Small improvements
+  add up over time.
 - **Note improvements, don't implement them** — Stay focused on the plan. Mention ideas
   in batch reports for the user to decide on.

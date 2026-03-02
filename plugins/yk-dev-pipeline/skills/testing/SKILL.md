@@ -5,6 +5,11 @@ description: >
   e2e/API tests, edge case tests, and basic performance benchmarks. Detects the project's
   test runner or defaults to Vitest. Targets >80% coverage.
   Triggers on: "write tests", "testing phase", "add tests",
+  "test this", "test it", "write unit tests", "write integration tests",
+  "add test coverage", "increase coverage", "improve test coverage",
+  "we need tests", "this needs tests", "test the code",
+  "create tests", "generate tests", "start testing",
+  "cover this with tests", "write e2e tests", "test my code",
   or when pipeline-state.json shows code-review is approved.
   Works standalone on any codebase — does not require earlier pipeline phases.
   NOTE: "next step" after code review is handled by the pipeline router, not this skill directly.
@@ -36,16 +41,11 @@ brainstorm → planning → implementation → code-review → [testing] → doc
 
 ## References
 
-Before writing any tests, load the test patterns reference
-(path relative to the skills root):
+**STOP — you MUST load references before writing any tests.** Use the Read tool to read
+the file below. Do not skip this step.
 
-```
-Read testing/references/test-patterns.md
-```
-
-This file contains detailed test structure, naming conventions, factory patterns, mocking
-rules, assertion quality examples, all test type examples (unit, integration, E2E, edge case,
-performance), anti-patterns, and special case handling (no database, frontend, existing tests).
+**Always load (mandatory):**
+- `testing/references/test-patterns.md` — test structure, naming conventions, factory patterns, mocking rules, assertion quality, all test type examples (unit, integration, E2E, edge case, performance), anti-patterns, and special case handling
 
 ---
 
