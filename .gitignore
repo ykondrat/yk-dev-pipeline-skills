@@ -10,3 +10,5 @@ Thumbs.db
 
 # Archive files generated during development
 *.zip
+
+/docs

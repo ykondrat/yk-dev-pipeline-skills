@@ -1,6 +1,7 @@
 {
   "project_name": "url-shortener-api",
   "created_at": "2026-02-11T10:00:00Z",
+  "selected_phases": ["brainstorm", "planning", "implementation", "code-review", "testing", "documentation"],
   "current_phase": "testing",
   "phases": {
     "brainstorm": {
@@ -23,8 +24,15 @@
       "completed_at": "2026-02-11T13:00:00Z",
       "outputs": [],
       "completed_tasks": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "last_completed_task": 10,
       "deviations": [
         "Task 6: Used ioredis instead of node-redis (better TypeScript support)"
+      ],
+      "finding_outcomes": [
+        {"id": "CR-001", "status": "fixed", "reason": "Timeout added on redirect DB fallback"},
+        {"id": "CR-002", "status": "fixed", "reason": "Rate limit entry cleanup added"},
+        {"id": "CR-003", "status": "modified", "reason": "Used structured logger instead of console.error"},
+        {"id": "CR-004", "status": "dismissed", "reason": "Redis health already checked via ping in startup"}
       ],
       "detected_stack": {
         "runtime": "node 20",
@@ -51,7 +59,23 @@
         "nitpick": 7,
         "debatable": 2
       },
-      "cross_step_impacts": []
+      "cross_step_impacts": [],
+      "doc_impacts": [
+        "New endpoint POST /api/urls — added URL creation",
+        "New env var REDIS_URL — Redis connection string",
+        "Changed RateLimiter constructor signature"
+      ],
+      "review_statistics": {
+        "cycle": 2,
+        "total_findings": 11,
+        "fixed": 7,
+        "modified": 2,
+        "dismissed_accepted": 1,
+        "dismissed_reraised": 0,
+        "deferred": 1,
+        "new_findings": 3,
+        "acceptance_rate": "82%"
+      }
     },
     "testing": {
       "status": "in-progress",
@@ -68,7 +92,8 @@
       }
     },
     "documentation": {
-      "status": "pending"
+      "status": "pending",
+      "last_documented_commit": null
     }
   }
 }

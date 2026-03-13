@@ -45,6 +45,7 @@ implementer was held to.
 - `implementation/references/js-ts-best-practices.md` — TypeScript patterns, Node.js patterns, security, performance (same standards used during implementation)
 
 **Load if applicable to the project's stack:**
+- `implementation/references/security-patterns.md` — if project has HTTP endpoints, user input, auth, or sensitive data (OWASP Top 10 patterns — essential for the security-first review pass)
 - `implementation/references/databases-sql.md` — if project uses PostgreSQL, MySQL, or SQLite
 - `implementation/references/databases-nosql.md` — if project uses MongoDB or DynamoDB
 - `implementation/references/databases-redis.md` — if project uses Redis
@@ -73,7 +74,15 @@ for context but focus analysis on diffs.
 
 When re-reviewing after fixes:
 
+- **Read finding outcomes** — check `pipeline-state.json` for `finding_outcomes` in the
+  implementation phase. This tells you what the implementer did with each finding (fixed,
+  modified, dismissed, deferred) and why. Start your re-review from this data.
 - **Check previous review.md** — load the prior review to know what was found
+- **Respect dismissed findings** — if the implementer dismissed a finding with valid
+  reasoning (documented in finding outcomes), don't re-raise it. If their reasoning is
+  wrong, re-raise with a rebuttal explaining why the dismissal is incorrect.
+- **Verify modified fixes** — if a finding was "modified" (different approach than suggested),
+  verify the alternative approach actually addresses the underlying issue.
 - **Don't re-raise resolved findings** — if a finding from the previous review was fixed
   correctly, don't mention it again. Focus on whether the fix is correct and complete.
 - **Watch for fix-induced issues** — fixes often introduce new problems in adjacent code.
@@ -103,17 +112,110 @@ npm test             # Tests
 ```
 Record results — these are automatic findings.
 
-### Step 4: Review File by File
+### Step 4: Security-First Review Pass
+
+**Before the file-by-file review, do a dedicated security pass across the entire codebase.**
+
+This is a separate, focused pass — not interleaved with correctness or style checks. Think
+like an attacker. The goal is to find every security vulnerability before anything else.
+
+**Security pass checklist:**
+1. **Auth enforcement** — Trace every endpoint. Is auth middleware applied? Are there
+   unprotected routes that should be protected? Are authorization checks (not just
+   authentication) performed on resource access?
+2. **Input validation** — Is every entry point (HTTP handlers, message consumers, CLI
+   parsers) validated with a schema? Are there any raw `req.body`, `req.params`, or
+   `req.query` uses without prior validation?
+3. **Injection vectors** — Search for string concatenation/template literals in SQL,
+   NoSQL, shell commands, HTML rendering. Every one is a potential critical finding.
+4. **Secrets** — Search for hardcoded strings that look like keys, tokens, passwords,
+   or connection strings. Check that `.env` is in `.gitignore`.
+5. **Output encoding** — Is user content escaped before HTML rendering? Any
+   `dangerouslySetInnerHTML`, `innerHTML`, or string-interpolated HTML?
+6. **SSRF** — Does the server fetch user-supplied URLs? Are private IPs blocked?
+7. **Dependencies** — Run `npm audit`. Check for new dependencies added without
+   justification or with known CVEs.
+
+**All security findings default to 🔴 Critical unless clearly mitigated.** Downgrade to
+🟡 Major only if there's a partial mitigation in place (e.g., input is validated but not
+all fields, or rate limiting exists but thresholds are too high).
+
+Record security pass results. Then proceed to the file-by-file review.
+
+### Step 5: Review File by File (including TDD test quality)
 Review order: types → config → domain logic → infrastructure → API layer → utilities → entry point.
 Check all applicable review areas per file. Load the detailed checklists from
 `code-review/references/review-checklists.md` for each area.
 
-### Step 5: Check Cross-Step Dependencies
+**TDD Test Quality Review:** If implementation wrote tests via TDD, review test files
+alongside the code they test. Check:
+- **Tests test behavior, not implementation** — assertions should survive refactoring.
+  Tests that mock internal functions or assert on internal state are brittle.
+- **Test names describe requirements** — `it('should reject expired JWT tokens')` not
+  `it('test case 3')`. The test name IS the spec.
+- **Assertion quality** — specific assertions (`toEqual`, `toThrow(ValidationError)`)
+  over vague ones (`toBeTruthy`, `toBeDefined`).
+- **No test-implementation coupling** — tests don't import private functions, reach
+  into internal state, or depend on execution order.
+- **Edge cases covered** — null, empty, boundary values, error paths. Not just the
+  happy path.
+- **No mocking internal modules** — tests mock at boundaries (external APIs, database),
+  not between internal modules.
+
+Flag test quality issues at 🔵 Minor severity unless they mask actual bugs (then 🟡 Major).
+
+**Context efficiency for large codebases:** If reviewing >15 source files, consider
+using sub-agents for batched file-by-file review (e.g., 5 files per sub-agent).
+Each sub-agent returns findings in the standard format (severity, file:line, description,
+impact, suggested fix). Consolidate all findings in the main context for the final report.
+
+**Specialist-agent review (optional):** For complex projects, consider sub-agents focused
+on security (auth, injection, SSRF), performance (N+1, blocking I/O, memory leaks), or
+architecture (coupling, circular deps, SRP). Each returns findings in standard format;
+the main reviewer consolidates and deduplicates.
+
+### Step 6: Check Cross-Step Dependencies
 - Do changes modify contracts (types, APIs, schemas) that testing/documentation depend on?
 - Are shared types consistent with what downstream steps expect?
 - Flag cross-step issues explicitly.
 
-### Step 6: Generate Reports (`review.md` + `fix-plan.md`)
+**Doc impacts** — identify changes that require documentation updates:
+- New or changed HTTP endpoints (method, path, request/response shape)
+- New or changed environment variables
+- New or changed public exports (for libraries)
+- Changed error types or error codes
+- Changed authentication/authorization behavior
+
+Record these as `doc_impacts` in `pipeline-state.json` (under the code-review phase).
+The documentation skill reads these to know exactly what to update.
+
+### Step 7: Generate Reports (`review.md` + `fix-plan.md`)
+
+**Recovery checkpoint:** After generating reports, update `pipeline-state.json` with
+review progress. If the session drops mid-review, a new session can detect the partial
+state:
+- If `review.md` exists and `code-review.status` is `in-progress` → reports were
+  generated but handoff didn't complete. Read `review.md` and proceed to handoff.
+- If `code-review.status` is `in-progress` but no `review.md` → review was interrupted
+  before report generation. Re-run the review (re-read all files).
+
+### Step 8: Compute Review Statistics (re-review cycles only)
+
+After generating the re-review report, compute review statistics:
+
+1. **Read finding outcomes** from `pipeline-state.json` (implementation phase)
+2. **For each finding** from the previous review, record its disposition
+3. **Compute acceptance rate**: (fixed + modified) / total findings × 100
+4. **Populate** the "Finding Outcomes" and "Review Effectiveness" sections in `review.md`
+5. **Update `pipeline-state.json`** with `review_statistics` (see Pipeline State format)
+
+**Use statistics to calibrate future reviews:**
+- If acceptance rate is <60%, the reviewer may be over-flagging — consider whether
+  dismissed findings were truly issues or matters of preference
+- If many findings are "modified", the suggested fixes may not account for implementation
+  context — consider more detailed fix instructions in `fix-plan.md`
+- Track which review areas produce the most dismissed findings — these may need
+  calibration in future reviews
 
 ---
 
@@ -236,7 +338,12 @@ alt text, form labels, focus management, screen reader support.
 - **Verdict**: {🛑 Block | ⚠️ Request Changes | ✅ Approve with suggestions | ✅ Approve}
 
 ## Automated Checks
-TypeScript: {✓/✗} | Build: {✓/✗/⊘} | Lint: {✓/✗/⊘} | Tests: {✓/✗/⊘}
+TypeScript: {✓/✗} | Build: {✓/✗/⊘} | Lint: {✓/✗/⊘} | Tests: {✓/✗/⊘} | npm audit: {✓/✗/⊘}
+
+## Security Pass Results
+{Summary of the dedicated security-first review pass — auth enforcement, input
+validation coverage, injection vectors found, secrets check, output encoding,
+SSRF check, dependency audit. Reference specific findings by [CR-NNN] IDs.}
 
 ## Plan Deviations
 | # | Planned | Implemented | Classification | Action |
@@ -244,6 +351,14 @@ TypeScript: {✓/✗} | Build: {✓/✗/⊘} | Lint: {✓/✗/⊘} | Tests: {✓
 
 ## Cross-Step Dependencies
 {Contracts, types, APIs changed that affect downstream skills}
+
+## Doc Impacts
+{Changes that require documentation updates — the documentation skill reads this list.}
+| Change | Type | Affected Docs |
+|--------|------|---------------|
+| Added POST /api/tokens | New endpoint | api.md, README |
+| Added REDIS_URL env var | New env var | deployment.md, README |
+| Changed UserService.create() signature | Public API change | api.md |
 
 ## 🔴 Critical | 🟡 Major | 🔵 Minor | ⚪ Nitpick
 ### [{ID}] {title} [DEBATABLE?] [CLARIFY?]
@@ -259,6 +374,22 @@ TypeScript: {✓/✗} | Build: {✓/✗/⊘} | Lint: {✓/✗/⊘} | Tests: {✓
 
 ## YAGNI
 | Item | Type | Usage | Recommendation |
+
+## Finding Outcomes (re-review only)
+| Finding | Status | Implementer Reason | Reviewer Verdict |
+|---------|--------|-------------------|-----------------|
+| [CR-001] | Fixed | {reason} | ✓ Confirmed / ✗ Incomplete |
+| [CR-002] | Dismissed | {reason} | ✓ Accepted / ✗ Re-raised |
+
+## Review Effectiveness (re-review only)
+- **Findings from previous review**: {N}
+- **Fixed as suggested**: {N}
+- **Fixed with modifications**: {N}
+- **Dismissed (accepted)**: {N} — reviewer agrees dismissal is valid
+- **Dismissed (re-raised)**: {N} — dismissal reasoning was incorrect
+- **Deferred**: {N}
+- **New findings this cycle**: {N}
+- **Acceptance rate**: {N}% (fixed + modified) / total
 
 ## ✅ What's Done Well
 {Specific, earned observations}
@@ -307,13 +438,12 @@ npx tsc --noEmit && npm run build && npm run lint && npm test
 ## Receiving the Review — For the Implementation Skill
 
 **Verify before implementing.** Don't blindly follow — check each issue exists.
-**[DEBATABLE]:** Push back with technical reasoning if you disagree.
-**[CLARIFY]:** Stop. Ask. Don't implement until clarified.
-**Fix order:** Blocking → Simple → Complex within each priority.
-**Per fix:** Implement → Verify → Regression check → Next.
-**Push back when:** Fix breaks things, reviewer missed context, current approach is
-intentional, or fixing violates YAGNI.
+**[DEBATABLE]:** Push back with reasoning. **[CLARIFY]:** Stop and ask first.
+**Fix order:** Blocking → Simple → Complex. **Per fix:** Implement → Verify → Regression.
+**Push back when:** fix breaks things, reviewer missed context, or fixing violates YAGNI.
 **Acknowledge:** "Fixed [CR-001]. Null check added." Not "Great catch!"
+**Track outcomes:** After all fixes, produce finding outcomes table (see implementation
+skill) — every `[CR-NNN]` gets a status with reasoning. Feeds re-review effectiveness.
 
 ---
 
@@ -328,7 +458,21 @@ intentional, or fixing violates YAGNI.
       "outputs": ["review.md", "fix-plan.md"],
       "verdict": "block | request-changes | approve-with-suggestions | approve",
       "findings": { "critical": N, "major": N, "minor": N, "nitpick": N },
-      "cross_step_impacts": ["{changed contracts}"]
+      "cross_step_impacts": ["{changed contracts}"],
+      "doc_impacts": [
+        "{new/changed endpoints, env vars, public exports, error types}"
+      ],
+      "review_statistics": {
+        "cycle": "{N}",
+        "total_findings": "{N}",
+        "fixed": "{N}",
+        "modified": "{N}",
+        "dismissed_accepted": "{N}",
+        "dismissed_reraised": "{N}",
+        "deferred": "{N}",
+        "new_findings": "{N}",
+        "acceptance_rate": "{N}%"
+      }
     }
   }
 }
@@ -338,7 +482,18 @@ intentional, or fixing violates YAGNI.
 
 ## Handoff
 
+**Fix loop verdicts (always, regardless of `selected_phases`):**
 **🛑 Block:** "Blocked. {N} critical. Fix plan in fix-plan.md. → Implementation → Re-review."
 **⚠️ Request Changes:** "Changes requested. {N} major. → Implementation → Re-review."
-**✅ Approve+:** "Approved with suggestions. {N} minor. → Testing phase."
-**✅ Approve:** "Approved. Code is production-ready. → Testing phase."
+
+**Approved verdicts:** Resolve the next phase using the Handoff Resolution algorithm
+from the Router skill: read `pipeline-state.json`, find the next phase in
+`selected_phases` after "code-review" (default: testing).
+**✅ Approve+:** "Approved with suggestions. {N} minor. → **{resolved_next_phase}** phase."
+**✅ Approve:** "Approved. Code is production-ready. → **{resolved_next_phase}** phase."
+If no more selected phases remain:
+**✅ Approve+/Approve:** "Approved. Pipeline complete for selected scope."
+
+For approved verdicts, if the conversation is long (implementation + review in same session):
+> "Review artifacts are on disk. You can start a new session and say 'continue'
+> for a cleaner next phase — or I can continue here."

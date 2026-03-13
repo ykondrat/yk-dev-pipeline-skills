@@ -17,9 +17,8 @@ metadata:
 
 # Investigation — Dev Pipeline Step 1b
 
-You are a senior software engineer running a systematic investigation. Your job is to
-deeply understand the problem, trace root causes with evidence, and produce a validated
-fix strategy — presented in small pieces, confirmed as you go.
+Systematic investigation. Deeply understand the problem, trace root causes with evidence,
+and produce a validated fix strategy — presented in small pieces, confirmed as you go.
 
 ## Pipeline Context
 
@@ -34,8 +33,8 @@ optimize existing code rather than build something new.
        ↑ you are here
 ```
 
-Each step produces artifacts the next step consumes. After investigation completes,
-suggest the user run the **planning** skill next.
+Each step produces artifacts the next step consumes. After investigation completes, use
+the Handoff Resolution algorithm from the Router to determine the next phase.
 
 Pipeline state is tracked in `pipeline-state.json` inside the project directory.
 
@@ -101,6 +100,10 @@ messages, and version numbers from the project.
 **How many searches?** Aim for 3-6 targeted `WebSearch` queries. Use `WebFetch` to read
 2-3 of the most relevant results in depth. Don't spray dozens of queries — quality over
 quantity.
+
+**Context efficiency:** Consider launching a sub-agent for web research. Have it return
+a concise summary (<200 words) of findings rather than keeping raw search results in the
+main conversation context.
 
 **Present findings to the user:**
 - Concise bullet-point summary of key findings
@@ -175,7 +178,9 @@ before proceeding. This contains the debugging strategies and root cause pattern
 Conduct a systematic investigation:
 
 - **Trace code paths** — Follow the execution path from entry point to failure point.
-  Document each step with `file:line` references.
+  Document each step with `file:line` references. For large codebases, consider
+  launching a sub-agent for deep exploration — have it return only relevant `file:line`
+  references rather than full file contents.
 - **Check data flow** — Track how data transforms through the system. Look for where
   values become unexpected.
 - **Analyze code smells** — For refactoring: identify coupling, complexity, duplication,
@@ -313,12 +318,14 @@ detailed evidence, code traces, and alternative approaches considered.
 
 #### Pipeline State
 
-Create or update `{project-dir}/pipeline-state.json`:
+Create or update `{project-dir}/pipeline-state.json`. If `selected_phases` was already
+set by the Router, preserve it. Otherwise, default to all phases:
 
 ```json
 {
   "project_name": "{project-name}",
   "created_at": "{ISO timestamp}",
+  "selected_phases": ["investigation", "planning", "implementation", "code-review", "testing", "documentation"],
   "current_phase": "investigation",
   "phases": {
     "investigation": {
@@ -352,10 +359,18 @@ If yes, commit with a message like: `docs: add {topic} investigation report`
 
 If no repo exists or user declines, move on — don't push it.
 
-**Handoff:** Suggest the next pipeline step:
-> "The investigation is complete! The next step is **Planning** — this will break down
-> the fix strategy into a detailed implementation plan with tasks, file structure, and
-> dependencies. Want me to start the planning phase?"
+**Handoff:** Resolve the next phase using the Handoff Resolution algorithm from the
+Router skill: read `pipeline-state.json`, find the next phase in `selected_phases`
+after "investigation" (default: planning). Present:
+> "The investigation is complete! The next step is **{resolved_next_phase}**."
+If no more selected phases remain:
+> "Investigation complete! That completes the selected pipeline scope."
+
+If the investigation involved extensive research or deep codebase exploration, suggest a session split:
+> "If this conversation is getting long, you can start a new session and say 'continue'
+> — the spec and investigation report are on disk, so the next phase will pick up cleanly."
+
+Otherwise, ask if the user wants to proceed to the resolved next phase.
 
 ---
 

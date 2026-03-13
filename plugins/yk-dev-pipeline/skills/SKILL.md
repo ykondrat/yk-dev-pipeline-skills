@@ -44,6 +44,48 @@ Phase 1 has two alternatives:
 
 ## How to Use
 
+### Phase Selection
+
+When starting a new pipeline (no `pipeline-state.json` exists, or user says "start over"),
+present the phase selection menu before routing to Phase 1. Use the `AskUserQuestion` tool:
+
+> Which phases do you want to include in this pipeline run?
+>
+> Available phases:
+>   1a. Brainstorm  (or 1b. Investigation)
+>   2.  Planning
+>   3.  Implementation
+>   4.  Code Review
+>   5.  Testing
+>   6.  Documentation
+>
+> Presets:
+>   [A] Full pipeline (all phases) — recommended
+>   [B] Quick build (brainstorm/investigation → planning → implementation)
+>   [C] Review & polish (code review → testing → documentation)
+>   [D] Custom — pick individual phases
+
+If the user picks [D], follow up with: "Which phases? (e.g., 'brainstorm, planning,
+implementation, testing')". Accept phase names in any format and normalize to canonical names:
+
+| Input | Canonical name |
+|-------|---------------|
+| 1a, brainstorm, bs | brainstorm |
+| 1b, investigation, invest, inv | investigation |
+| 2, planning, plan | planning |
+| 3, implementation, impl, implement | implementation |
+| 4, code-review, review, cr | code-review |
+| 5, testing, test, tests | testing |
+| 6, documentation, docs, doc | documentation |
+
+Store the selection in `pipeline-state.json` as `selected_phases` (see Pipeline State below).
+Then proceed to the first selected phase (brainstorm or investigation).
+
+**Skip the menu when:**
+- User's request already implies phase selection (see Rule 0 in Intent Detection)
+- User explicitly names a single phase ("brainstorm this") — set `selected_phases` to all phases
+- User says "full pipeline" or doesn't mention any phase selection — set `selected_phases` to all phases
+
 ### Starting Phase 1
 
 Detect the user's intent and route to the correct Phase 1 skill.
@@ -104,6 +146,7 @@ the pipeline is and what's been completed:
 {
   "project_name": "{project name}",
   "created_at": "{ISO}",
+  "selected_phases": ["brainstorm", "planning", "implementation", "code-review", "testing", "documentation"],
   "current_phase": "implementation",
   "phases": {
     "brainstorm": { "status": "completed", "outputs": ["spec.md", "docs/plans/..."] },
@@ -116,9 +159,38 @@ the pipeline is and what's been completed:
 }
 ```
 
+**`selected_phases`:** Array of phases the user chose to run. If absent, all phases are
+selected (backward compatible). The ordered phase sequence is always:
+brainstorm/investigation → planning → implementation → code-review → testing → documentation.
+Phases not in `selected_phases` are skipped during continuation and handoff resolution.
+
 **Note:** The first phase key is either `brainstorm` OR `investigation` — they are
 alternatives, never both. If investigation was Phase 1, the state will have an
 `investigation` key instead of `brainstorm`.
+
+### Prerequisite Validation
+
+**Before routing to any phase**, validate prerequisites. If validation fails, present
+clear recovery options — don't silently proceed with missing inputs.
+
+| Phase | Required Files | Required Status | If Missing |
+|-------|---------------|----------------|------------|
+| Planning | `spec.md`, design doc or investigation report | brainstorm/investigation: completed | "Spec is missing. Re-run brainstorm/investigation, or provide a spec." |
+| Implementation | `plan.md` | planning: completed | "Plan is missing. Run planning first, or provide a plan." |
+| Implementation (fix) | `fix-plan.md` or `fix-test-plan.md` | code-review: blocked OR testing: blocked | "Fix plan is missing but phase is blocked. Re-run code review/testing." |
+| Code Review | Source code files | implementation: completed | "No implementation found. Run implementation first." |
+| Testing | Source code files | code-review: completed (approved) or standalone | "Code review is blocked — fix issues before testing." |
+| Documentation | Source code files | testing: completed or standalone | "No code found to document." |
+
+**Graceful degradation** — when optional inputs are missing, announce reduced scope:
+- Code review without `spec.md` → "No spec available. Reviewing against best practices
+  only — cannot verify spec compliance (Area 10)."
+- Code review without `plan.md` → "No plan available. Cannot verify plan compliance
+  (Area 11) or classify deviations."
+- Testing without `review.md` → "No review available. Skipping review cross-reference
+  and regression tests for review findings."
+- Documentation without `spec.md`/`plan.md` → "No spec/plan available. Generating docs
+  from code only — feature descriptions may be less detailed."
 
 ### State Validation
 
@@ -136,13 +208,44 @@ When reading `pipeline-state.json`, validate before proceeding:
   `brainstorm` and `investigation` key, flag this as unusual — they are alternatives.
   Ask the user which one applies.
 
+### Pipeline Health Check
+
+Triggered by "pipeline status", "check health", "what's the state of the pipeline?",
+"is everything okay?". Runs a full validation without starting any phase:
+
+1. **Read `pipeline-state.json`** — report current phase and progress
+2. **Verify all artifacts** — check that every file listed in `outputs` arrays exists
+3. **Check for orphaned fix plans** — `fix-plan.md` or `fix-test-plan.md` exists but
+   no phase is blocked (leftover from a previous cycle)
+4. **Check for stale state** — `current_phase` doesn't match actual progress
+5. **Check git status** — uncommitted changes, diverged branches
+6. **Report** with recovery options for any issues found
+
+### Error Recovery
+
+Common failure modes and structured recovery paths:
+
+| Failure | Try First | Then Try | Finally |
+|---------|-----------|----------|---------|
+| Build fails repeatedly | Read error, fix root cause | Check Node/TS version match | Ask user — may need dependency update |
+| Dependency install fails | `npm cache clean --force`, retry | Check package name for typosquat | Ask user — may need auth/registry config |
+| Tests fail after fix-plan changes | Run full test suite, check regression | Revert last fix, try alternative approach | Generate `fix-test-plan.md`, block to implementation |
+| Type errors cascade | Fix root type error first (usually in types/) | Check tsconfig strictness settings | Ask user — may need type strategy change |
+| Out of disk/memory | Clear node_modules, reinstall | Reduce test parallelism | Ask user — environment issue |
+| Lint errors on generated code | Auto-fix: `npm run lint -- --fix` | Fix manually if auto-fix fails | Disable specific rule with justification comment |
+
 ### Continuation Logic
 
 When the user says "next step", "continue", "go ahead", or similar:
 
 1. Read `pipeline-state.json`
 2. Find `current_phase` and phase statuses
-3. Route to the next action:
+3. **Phase resolution:** Check `selected_phases`. If present, skip any phase not in the
+   list when looking for the next pending phase. If `selected_phases` is absent, use all
+   phases (backward compatible). **Fix loop exception:** `code-review: blocked →
+   implementation` and `testing: blocked → implementation` always activate regardless of
+   `selected_phases`. If implementation is not in `selected_phases`, ask the user first.
+4. Route to the next action:
 
 | Current state | Next action |
 |---|---|
@@ -157,9 +260,52 @@ When the user says "next step", "continue", "go ahead", or similar:
 | documentation: completed | Pipeline complete — summarize and suggest new work |
 | Any phase: in-progress | Resume that phase |
 
+### Handoff Resolution
+
+When a phase completes and needs to suggest the next step, it resolves the next phase
+dynamically from `pipeline-state.json`:
+
+**Algorithm:** Read `selected_phases`. Starting from the phase after the current one in
+the ordered sequence [planning, implementation, code-review, testing, documentation],
+find the first phase that (a) exists in `selected_phases` and (b) has status `pending`.
+For brainstorm or investigation, the search starts from the beginning of the sequence.
+If `selected_phases` is absent, use all phases. If no next phase is found, the pipeline
+is complete for the selected scope.
+
+**Fix loop exception:** code-review blocked and testing blocked always route to
+implementation, regardless of `selected_phases`. These are mandatory recovery loops.
+If implementation is not in `selected_phases`, ask the user: "Code review/testing found
+issues that need fixing, but implementation was not in the selected phases. Should I add
+it to fix these issues, or would you prefer to handle this manually?"
+
+**Phase completion message templates:**
+
+| Completing phase | If next phase exists | If no next phase |
+|---|---|---|
+| brainstorm/investigation | "Your spec is ready! The next step is **{next}**." | "Spec ready — that completes the selected pipeline." |
+| planning | "Plan ready — {N} tasks. Next step: **{next}**." | "Plan ready — that completes the selected pipeline." |
+| implementation | "Implementation complete. Next step: **{next}**." | "Implementation complete — that completes the selected pipeline." |
+| code-review (approved) | "Approved. → **{next}** phase." | "Approved — pipeline complete for selected scope." |
+| code-review (blocked) | "Blocked. → Implementation → Re-review." (always) | (N/A — always loops) |
+| testing (passing) | "Testing complete. Next step: **{next}**." | "Testing complete — pipeline complete for selected scope." |
+| testing (blocked) | "Blocked. → Implementation → Re-test." (always) | (N/A — always loops) |
+| documentation | "Pipeline complete." (always — final phase) | "Pipeline complete." |
+
+Each phase skill uses its own context-appropriate wording (task counts, coverage numbers,
+etc.) but resolves `{next}` using this algorithm. Session split suggestions remain unchanged.
+
 ### Intent Detection Rules
 
 When routing a new user request (not "next step" / "continue"):
+
+**Rule 0 — Phase selection from natural language.** If the user's request includes
+phase exclusion or inclusion language, extract `selected_phases` without showing the
+menu. Store in `pipeline-state.json` and proceed directly to the first selected phase.
+Examples:
+- "Build me an API, skip review and docs" → `selected_phases`: ["brainstorm", "planning", "implementation", "testing"]
+- "Just brainstorm and plan this" → `selected_phases`: ["brainstorm", "planning"]
+- "Implement and test this" → `selected_phases`: ["implementation", "testing"]
+- "Full pipeline" or no phase mentions → `selected_phases`: all phases (default)
 
 **Rule 1 — Pipeline state takes priority.** If `pipeline-state.json` exists with an active pipeline, check if the request relates to the current pipeline before starting a new one.
 
@@ -175,9 +321,10 @@ When routing a new user request (not "next step" / "continue"):
 
 ### Phase 1a: Brainstorm
 **Skill:** `brainstorm/SKILL.md`
+**Reference:** `brainstorm/references/creativity-techniques.md`
 **Purpose:** Deep-dive into requirements through conversational questioning.
 **Output:** `spec.md` (concise summary) + detailed design doc
-**Key:** One question at a time, checks existing project context first, offers web research step (similar projects, best practices, library comparisons), proposes approaches with trade-offs, YAGNI ruthlessly. Uses extended thinking at critical design decisions.
+**Key:** One question at a time, checks existing project context first, offers web research step (similar projects, best practices, library comparisons), diverge-converge approach exploration with creativity techniques (pre-mortem, inversion, stakeholder role-play), assumption surfacing, YAGNI ruthlessly. Uses extended thinking at critical design decisions.
 **When:** New features, new projects, adding functionality.
 
 ### Phase 1b: Investigation
@@ -204,8 +351,8 @@ When routing a new user request (not "next step" / "continue"):
 - `implementation/references/databases-redis.md`
 
 **Purpose:** Execute the plan — write code, install deps, verify acceptance criteria.
-**Output:** Working code, passing builds
-**Key:** Critical plan review before coding, tech stack detection, batch execution (3 tasks per batch), quality gate after every batch (types + build + lint + tests), hard STOP on blockers. Follows Clean Code principles (meaningful names, small functions, clean error handling, DRY, SRP). Uses extended thinking for plan review, complex code, and self-review.
+**Output:** Working code, passing builds, TDD unit tests (for tasks marked `tdd`)
+**Key:** Critical plan review before coding, tech stack detection, TDD for pure logic tasks (Red-Green-Refactor), batch execution (3 tasks per batch), quality gate after every batch (types + build + lint + tests), security gate, hard STOP on blockers. Follows Clean Code principles (meaningful names, small functions, clean error handling, DRY, SRP). Uses extended thinking for plan review, complex code, and self-review.
 
 ### Phase 4: Code Review
 **Skill:** `code-review/SKILL.md`
@@ -221,15 +368,16 @@ When routing a new user request (not "next step" / "continue"):
 
 ### Phase 5: Testing
 **Skill:** `testing/SKILL.md`
-**Purpose:** Write comprehensive tests — unit, integration, e2e, edge cases, benchmarks.
+**Purpose:** Expand test coverage — integration, e2e, security, edge cases, benchmarks.
 **Output:** Test files + `test-report.md`
-**Key:** Auto-detect test runner (default Vitest), >80% coverage target, generate-run-fix loop, production bugs documented.
+**Key:** Builds on TDD unit tests from implementation (doesn't duplicate). Auto-detect test runner (default Vitest), >80% coverage target, generate-run-fix loop, production bugs documented.
 
 ### Phase 6: Documentation
 **Skill:** `documentation/SKILL.md`
+**Reference:** `documentation/references/doc-templates.md`
 **Purpose:** Generate all project documentation from actual code.
-**Output:** README.md, API docs, architecture, contributing, changelog, deployment guide
-**Key:** Every statement verified against code. Adapts format to project type. No aspirational docs.
+**Output:** README.md, API docs, architecture, contributing, changelog, deployment guide, doc-report.md
+**Key:** Full or update mode (incremental updates via git diff). Doc coverage analysis (100% public API target). Drift detection for stale docs. Every statement verified against code with cross-reference validation. Reads `doc_impacts` from code review. No aspirational docs.
 
 ## Handling User Requests
 
@@ -260,8 +408,71 @@ When routing a new user request (not "next step" / "continue"):
 | "Fix the failing tests" / "Fix test failures" | Start Phase 3 (Implementation) in test-fix mode — read `fix-test-plan.md` |
 | "Continue" / "Next step" | Check pipeline-state.json, proceed to next phase |
 | "What's the status?" / "How are we doing?" / "Where are we?" | Read pipeline-state.json, summarize progress |
+| "Check health" / "Pipeline status" / "Is everything okay?" | Run pipeline health check — validate all artifacts, detect issues |
 | "Start over" / "Start fresh" / "New pipeline" | Reset pipeline-state.json, start Phase 1 |
 | "Skip to testing" | Jump to Phase 5, note skipped phases |
+
+## Context Management
+
+The pipeline is designed for **session splitting**. Each phase reads its inputs from disk
+(spec.md, plan.md, review.md, etc.) and writes its outputs to disk. `pipeline-state.json`
+tracks where you are. This means:
+
+- **A new conversation can pick up from any phase cleanly.** The user just says "continue"
+  and you read `pipeline-state.json` to know exactly where to resume.
+- **Splitting sessions between phases is encouraged** — especially after the three heaviest
+  phases: brainstorm/investigation, implementation, and code review.
+
+### When to Suggest a New Session
+
+Suggest starting a new session when:
+
+- **A phase just completed** and the conversation is long (many tool calls, multiple
+  batches completed, extensive research or discussion). Say:
+  > "Phase complete — all artifacts are saved to disk. If this conversation is getting
+  > long, you can start a new session and say 'continue' — I'll pick up right where
+  > we left off from pipeline-state.json."
+- **Implementation has completed 6+ tasks** — context is likely heavy with code, batch
+  reports, and reference materials from earlier phases.
+- **After brainstorm/investigation with web research** — research results consume
+  significant context that's no longer needed once spec.md is written.
+- **After code review** — review findings, file-by-file analysis, and fix-plan are all
+  on disk. A fresh session for testing starts clean.
+
+### Phase Timeout Heuristics
+
+Monitor conversation weight and suggest session splits proactively:
+
+| Signal | Threshold | Action |
+|--------|-----------|--------|
+| Implementation batches | 3+ batches completed | Suggest session split after current batch |
+| Code review files | 15+ files reviewed | Suggest split before generating reports |
+| Brainstorm with web research | 6+ web searches done | Suggest split after spec is written |
+| Any phase | Conversation feels slow or repetitive | State is on disk — suggest fresh session |
+
+### New Session Startup Protocol
+
+When a user says "continue" in a new session:
+
+1. Read `pipeline-state.json` — determine current phase and status
+2. Check `selected_phases` — if absent, default to all phases (backward compatible)
+3. Verify phase outputs exist on disk (the files listed in `outputs` arrays)
+4. If outputs are missing, warn the user and suggest re-running that phase
+5. Load the next phase's SKILL.md and proceed normally — all inputs come from disk
+
+### Sub-Agent Guidance
+
+Use sub-agents to keep the main conversation context lean:
+
+- **Web research** (brainstorm/investigation) — launch a sub-agent for web searches,
+  have it return a <200 word summary of findings rather than raw search results
+- **Codebase exploration** (investigation) — launch a sub-agent for deep codebase
+  exploration, have it return only relevant `file:line` references
+- **Large code reviews** (code-review) — for codebases with >15 source files, consider
+  using sub-agents for batched file-by-file review, consolidating findings in main context
+- **Reference lookups** (implementation) — when you need to check a specific pattern from
+  a reference file you've already read, use Grep on the reference file instead of
+  re-reading the entire file
 
 ## Important Rules
 

@@ -60,13 +60,18 @@ all code you write.
 **Always load (mandatory):**
 - `implementation/references/clean-code-principles.md` — naming, functions, comments, error handling, classes, boundaries, formatting, code smells (based on Robert C. Martin's "Clean Code")
 - `implementation/references/js-ts-best-practices.md` — TypeScript patterns, Node.js patterns, modern JavaScript, security, performance, project structure, design patterns
+- `implementation/references/implementation-standards.md` — condensed Clean Code standards for every file, self-review checklist (security + smells + patterns + bugs), project scaffolding checklist, code style defaults
 
 **Load if applicable to the project's stack:**
+- `implementation/references/security-patterns.md` — if project has HTTP endpoints, user-facing input, authentication, or sensitive data handling (OWASP Top 10 patterns, auth, XSS, CSRF, SSRF, rate limiting, supply chain security)
 - `implementation/references/databases-sql.md` — if using PostgreSQL, MySQL, or SQLite (covers ORM + raw drivers, schema design, queries, migrations)
 - `implementation/references/databases-nosql.md` — if using MongoDB or DynamoDB
 - `implementation/references/databases-redis.md` — if using Redis for caching, queues, or sessions
 - `implementation/references/frameworks-web.md` — if using Express, Fastify, Hono, or Next.js API routes
 - `implementation/references/frameworks-frontend.md` — if building a frontend (React, Next.js, Vue 3)
+
+**Context efficiency:** Load references once at the start. Across subsequent batches, don't
+re-read entire reference files — use Grep to look up specific patterns when needed.
 
 ---
 
@@ -86,8 +91,13 @@ Before writing a single line of code:
 
 **Determine the mode:**
 - **Fresh implementation** — `plan.md` exists, no fix files → execute the full plan
-- **Code review fixes** — `fix-plan.md` exists → focus on fixes from code review, skip completed tasks
-- **Test failure fixes** — `fix-test-plan.md` exists → focus on fixes from testing, follow the fix plan exactly
+- **Resume implementation** — `pipeline-state.json` has `last_completed_task` → skip
+  completed tasks, resume from the next one. Announce: "Resuming from Task {N+1} —
+  Tasks 1-{N} already completed."
+- **Code review fixes** — `fix-plan.md` exists → focus on fixes from code review, skip completed tasks.
+  After all fixes: run full test suite (`npm test`) to catch regressions — not just affected tests.
+- **Test failure fixes** — `fix-test-plan.md` exists → focus on fixes from testing, follow the fix plan exactly.
+  After all fixes: run full test suite to verify failing tests now pass AND all previously-passing tests still pass.
 
 **[THINK DEEPLY]** Then review the plan critically. Don't just accept it — challenge it.
 Reason through the entire plan end-to-end before raising concerns. Consider how tasks
@@ -118,24 +128,12 @@ If `plan.md` doesn't exist or planning isn't complete:
 If it's a new project, document the planned stack from the spec. If it's an existing
 project, detect it from the codebase. Either way, produce a clear inventory:
 
-**Detect and document:**
-- **Runtime:** Node.js version, Deno, Bun
-- **Language:** TypeScript version, strictness config
-- **Framework:** React, Next.js, Express, Fastify, Hono, etc.
-- **Build tool:** Vite, tsup, esbuild, webpack, tsc
-- **Package manager:** npm, yarn, pnpm (check lockfile)
-- **Testing:** Jest, Vitest, Playwright, Cypress, node:test
-- **Linting:** ESLint config, Prettier config
-- **Database/ORM:** Prisma, Drizzle, TypeORM, etc.
-- **Key patterns:** barrel exports, dependency injection, factory functions, etc.
+**Detect and document:** runtime (Node.js version, Deno, Bun), TypeScript version +
+strictness, framework, build tool, package manager (check lockfile), test runner,
+linting config, database/ORM, key patterns (barrel exports, DI, factories).
 
-Present this to the user:
-> "Here's the tech stack I've detected / will set up: {summary}.
-> I'll match all code to these patterns. Does this look right?"
-
-This stack inventory informs every line of code you write. Follow detected patterns
-everywhere — consistency with the existing codebase is more important than personal
-preference or "best practice."
+Present to the user: "Here's the tech stack I've detected: {summary}. Does this look
+right?" Follow detected patterns everywhere — consistency beats personal preference.
 
 ### Step 3: Set Up the Workspace
 
@@ -175,44 +173,42 @@ approach. Consider the data flow, error paths, edge cases, and how this code int
 with what's already been built. Think about the right abstractions and interfaces before
 writing the first line.
 
+**Check the task's test mode** (from plan.md) and follow the appropriate path:
+
+**If `test_mode: tdd`** — Red-Green-Refactor cycle:
+1. **Red** — Write a failing test first, based on the plan's test case sketches and
+   acceptance criteria. Place the test file alongside the source file (e.g.,
+   `src/utils/validate-url.test.ts` next to `validate-url.ts`). Run the test — verify
+   it fails for the right reason (not a syntax error or import error, but an actual
+   assertion failure or missing module).
+2. **Green** — Write the minimal code to make the test pass. Don't over-engineer —
+   just enough to satisfy the assertions.
+3. **Refactor** — Clean up the code while keeping tests green. Apply Clean Code standards.
+   Run tests again to confirm they still pass.
+4. **Repeat** — If the task has multiple test cases, iterate: add the next failing test,
+   implement, refactor, until all test cases pass.
+
+The checkpoint commit (Step 4e) includes both the test and the code together.
+
+**If `test_mode: test-after`** — implement normally, then write a basic smoke test:
+1. Write the implementation code as specified in the plan.
+2. After the code is working, write a brief smoke test that verifies the happy path
+   works (e.g., "server starts and responds to GET /health with 200"). This is NOT
+   comprehensive — the testing phase will add thorough integration/E2E tests.
+3. Run the smoke test to verify it passes.
+
+**If `test_mode: no-test`** — implement normally, no test needed (types, config, scaffolding).
+
+**If plan.md doesn't have test modes** (legacy plans or user-provided plans), implement
+all tasks normally without TDD. The testing phase will handle all tests.
+
 Write the code as specified in the plan. Don't improvise features, don't skip steps,
 don't reorder without reason.
 
-**Clean Code standards — every file** (see `clean-code-principles.md` for full rationale):
-
-- **TypeScript strict mode** — No `any` types unless explicitly justified with a comment.
-  Use proper generics, unions, and type guards.
-- **Intention-revealing names** — Every name answers *why it exists, what it does, how
-  it's used*. If a name needs a comment to explain it, rename it. One word per concept
-  across the codebase (`fetch` or `get`, not both). Use domain vocabulary.
-- **Small, focused functions** — Each function does one thing at one level of abstraction.
-  5-15 lines ideal, rarely over 20, never over 30. Follow the Stepdown Rule: code reads
-  top-down, each function followed by those it calls. Prefer 0-2 arguments; group 3+ into
-  an options object. No hidden side effects.
-- **Error handling as a separate concern** — Use typed error classes extending `Error`.
-  Throw exceptions, don't return error codes or null. Provide context in error messages
-  (what operation failed, what input caused it, why). Define errors by caller's needs,
-  not by internal library types. Handle errors at boundaries; don't let try-catch obscure
-  business logic.
-- **No magic values** — Extract constants. `const MAX_RETRIES = 3` not `if (retries > 3)`.
-- **Comments only for "why"** — If you need a comment, first try to make the code speak
-  for itself. Only comment non-obvious intent, warnings, or clarifications. Never write
-  redundant comments, journal comments, or commented-out code. JSDoc only for public APIs.
-- **DRY** — If the same logic appears in two places, extract it. Duplication is the root
-  of all evil in software. But don't over-abstract — three similar lines are better than
-  a premature abstraction.
-- **Small classes/modules** — Each module has one reason to change (SRP). High cohesion:
-  methods use most of the module's state. If a subset of functions uses a subset of
-  variables, that's a new module waiting to be extracted.
-- **Clean boundaries** — Wrap third-party APIs in your own abstractions. Don't let external
-  types leak through your interfaces. Callers shouldn't know your implementation details.
-- **Consistent patterns** — Follow the detected tech stack patterns from Step 2. Don't
-  introduce new patterns without reason. Team rules beat personal preference.
-- **Imports** — External deps first, then internal modules, then relative imports.
-  Named imports preferred.
-- **Boy Scout Rule** — Leave every file a little cleaner than you found it. If you touch
-  a file to add a feature, clean up any small issues you see (bad name, dead code,
-  unclear logic). Don't go on a refactoring spree — small, incremental improvements.
+**Clean Code standards — every file.** Follow the Clean Code standards from
+`implementation/references/implementation-standards.md` § Clean Code Standards. Key
+rules: strict TypeScript, intention-revealing names, small focused functions (5-15 lines),
+typed error handling, no magic values, DRY, SRP, clean boundaries, consistent patterns.
 
 **File creation:** Create complete, functional files — not stubs. No `// TODO: implement`
 placeholders unless truly blocked on something external.
@@ -226,8 +222,20 @@ npm install {package}        # production
 npm install -D {package}     # dev only
 ```
 
-Verify the package exists before installing. If a planned dependency doesn't exist or is
-deprecated, **STOP** and flag it.
+**Dependency verification protocol — before EVERY install:**
+
+1. **Verify legitimacy:** Run `npm info {package}` — check weekly downloads (< 100 is
+   suspicious for a well-known package), last publish date, maintainer count, and that
+   the repository link points to a real project.
+2. **Check for typosquats:** Verify the exact package name matches what you intend.
+   Common attack: `lodash` vs `1odash`, `express` vs `expres`.
+3. **Check for hallucination:** If you're not certain a package exists on npm, check
+   first. AI models sometimes suggest packages that don't exist — attackers register
+   these names with malicious code.
+4. **Run `npm audit`** after installing to check for known CVEs.
+
+If a planned dependency doesn't exist, is deprecated, or has known critical CVEs,
+**STOP** and flag it.
 
 #### 4d. Verify Acceptance Criteria
 
@@ -240,8 +248,33 @@ After each task, check every acceptance criterion from the plan:
 
 **If a criterion fails:** Fix it before moving to the next task.
 
-#### 4e. Mark Complete
-> "✓ Task 3 complete — acceptance criteria: 3/3 passing."
+#### 4e. Checkpoint Commit
+
+After each task passes its acceptance criteria, create a checkpoint commit:
+
+```bash
+git add -A && git commit -m "task({N}): {short task title}"
+```
+
+Checkpoint commits create recovery points — if the session drops or context degrades,
+implementation can resume from the last committed task. They also make code review
+diffs cleaner (one commit per task instead of one giant commit).
+
+**Update `pipeline-state.json`** with the completed task number:
+
+```json
+{
+  "phases": {
+    "implementation": {
+      "status": "in-progress",
+      "last_completed_task": 3
+    }
+  }
+}
+```
+
+#### 4f. Mark Complete
+> "✓ Task 3 complete — acceptance criteria: 3/3 passing, committed."
 
 ### Step 5: Quality Gate
 
@@ -261,68 +294,68 @@ npm run lint
 npm test
 ```
 
-**If any check fails:**
-1. Identify the root cause
-2. Fix the issue
-3. Re-run the check until it passes
-4. Note what failed and how you fixed it
-
-**Don't report to the user until all quality gates pass.** The batch isn't done
-until the project builds, type-checks, lints, and tests pass.
+**If any check fails:** Identify root cause, fix, re-run until passing. Note what failed
+and how you fixed it. **Don't report until all quality gates pass.**
 
 If a check doesn't apply yet (no tests exist, no build script), skip it and note
 that it was skipped.
 
-### Step 6: Self-Review
+### Step 6: Security Gate
 
-**[THINK DEEPLY]** After quality gates pass, do a thorough self-review of the batch's
+**After quality gates pass, run the security gate before self-review.** This is a
+blocking gate — like type checking, it must pass before the batch is considered complete.
+
+**Automated checks:**
+
+```bash
+# 1. Check for known dependency vulnerabilities
+npm audit
+
+# 2. Search for dangerous patterns in new/modified files
+# (run these as mental checks — grep the code you wrote in this batch)
+```
+
+**Manual verification — check every file in this batch:**
+
+| Check | What to look for |
+|-------|-----------------|
+| **Input validation** | Every endpoint/handler that accepts external input has schema validation (Zod/Joi) at the entry point |
+| **Parameterized queries** | No string concatenation/template literals in SQL/NoSQL queries |
+| **No eval/Function** | No `eval()`, `new Function()`, or `child_process.exec()` with user input |
+| **No hardcoded secrets** | No API keys, passwords, tokens, or connection strings in source code |
+| **Auth enforcement** | Protected endpoints have auth middleware — not just frontend checks |
+| **Output encoding** | User-generated content is escaped/encoded before rendering in HTML |
+| **SSRF protection** | If fetching user-supplied URLs, private IPs and internal hosts are blocked |
+| **Error disclosure** | Error responses don't leak stack traces, SQL errors, or file paths |
+
+**If `npm audit` reports critical/high:** Try `npm audit fix`. If breaking changes needed,
+flag to user. If no fix, document CVE and mitigation in batch report.
+
+**If any manual check fails:** Fix now, before self-review. Note what you found and fixed.
+
+### Step 7: Self-Review
+
+**[THINK DEEPLY]** After quality gates and security gate pass, do a thorough self-review of the batch's
 changes. Don't just skim the checklist — reason through each item against the actual code
 you wrote. Think like an attacker for security, think like a confused maintainer for
 readability, think like a tired developer for subtle bugs.
 
-Run through this checklist for all code written in this batch:
-
-**Security scan:**
-- Any user input used without sanitization?
-- Any secrets or credentials hardcoded?
-- Any SQL/NoSQL injection vectors?
-- Any path traversal vulnerabilities?
-- Any unsafe `eval()`, `Function()`, or dynamic code execution?
-- Any sensitive data logged or exposed in error messages?
-
-**Clean Code smells** (see `clean-code-principles.md` § Code Smells):
-- Any function over 20 lines that should be split?
-- Any function with 3+ arguments that should take an options object?
-- Any names that don't reveal intent? Any inconsistent naming?
-- Any commented-out code, redundant comments, or journal comments?
-- Any duplicated logic across files?
-- Any null returns that force callers to null-check? (Return empty collections instead)
-- Any raw third-party types leaking through public interfaces?
-- Any boolean flag arguments? (Split into two functions)
-
-**Pattern consistency:**
-- Does all new code follow the patterns detected in Step 2?
-- Are naming conventions consistent with the rest of the codebase?
-- Are error handling patterns consistent?
-- Are import styles consistent?
-
-**Obvious bugs:**
-- Any unreachable code or dead code?
-- Any missing null/undefined checks on values that could be nullish?
-- Any off-by-one errors in loops or slicing?
-- Any async functions missing `await`?
-- Any event listeners or resources not cleaned up?
-- Any hidden temporal coupling (functions that must be called in order)?
+Run through the **Self-Review Checklist** from
+`implementation/references/implementation-standards.md`. The checklist covers four areas:
+security deep review (12 items), Clean Code smells (8 items), pattern consistency (4 items),
+and obvious bugs (6 items). Don't just skim — reason through each item against the actual
+code you wrote.
 
 **If you find issues:** Fix them now, before reporting. Note what you found and fixed.
 **If you're unsure about something:** Flag it in the batch report for the Code Review skill.
 
-### Step 7: Report and Wait
+### Step 8: Report and Wait
 
-**After quality gates and self-review pass, STOP and report:**
+**After quality gates, security gate, and self-review pass, STOP and report:**
 
 - What was implemented (files created/modified)
 - Quality gate results (build ✓, types ✓, lint ✓, tests ✓ / skipped)
+- Security gate results (npm audit ✓, manual checks ✓)
 - Self-review findings (issues fixed, items flagged for code review)
 - Any deviations from the plan and why
 - Current progress: "Tasks 4-6 of 12 complete"
@@ -333,7 +366,7 @@ Then say:
 
 **Wait for the user to respond.** Don't continue until they give the go-ahead.
 
-### Step 8: Apply Feedback and Continue
+### Step 9: Apply Feedback and Continue
 
 Based on user feedback:
 - Apply any requested changes
@@ -345,90 +378,45 @@ Based on user feedback:
 
 ## When to STOP and Ask
 
-**Stop executing immediately when:**
+**Stop immediately when:** blocker (missing dep, repeated build failure), plan gap or
+contradiction, unclear task, acceptance criteria failure, scope question (work not in
+plan), missing external dependency (API key, service), or security concern in the plan.
 
-- **Blocker:** A dependency is missing, a build fails repeatedly, or an instruction is unclear
-- **Plan gap:** The plan has a critical gap that prevents completing a task
-- **Confusion:** You don't understand what a task is asking for
-- **Contradiction:** The plan contradicts the spec, or two tasks contradict each other
-- **Verification failure:** Acceptance criteria fail and you can't figure out why
-- **Scope question:** A task requires work not described in the plan
-- **External dependency:** Something requires an API key, service, or resource you don't have
-- **Security concern:** You spot a security issue in the plan's approach itself
-
-**Ask for clarification rather than guessing.** Say what's blocking you, what you've tried,
-and what you think the options are.
-
-**Don't force through blockers.** It's always better to stop and ask than to build on
-a wrong assumption.
+**Ask rather than guess.** Say what's blocking, what you've tried, what the options are.
 
 ---
 
 ## Project Scaffolding (First Batch)
 
-The first batch usually involves project setup. Checklist:
-
-**package.json:**
-- `npm init -y` or create manually with correct metadata from spec
-- `"type": "module"` for ESM (recommended)
-- `main`, `types`, `exports` for libraries
-- `bin` for CLI tools
-- Scripts: `build`, `dev`, `test`, `lint` as relevant
-
-**tsconfig.json:**
-- `"strict": true` by default
-- Appropriate `target` and `module` for the runtime
-- `outDir`, `rootDir`, `declaration` as needed
-
-**.gitignore:**
-- node_modules/, dist/, .env, coverage/, *.log, .DS_Store
-
-**Directory structure:** Create all directories from plan.md.
+The first batch usually involves project setup. Follow the **Project Scaffolding
+Checklist** from `implementation/references/implementation-standards.md` — covers
+package.json, tsconfig.json, .gitignore, and directory structure.
 
 ---
 
 ## Handling Problems
 
-**Plan says X, but X doesn't work in practice:**
-- Explain the conflict
-- Propose an alternative
-- Ask: "The plan says X, but Y would work better because Z. Should I go with Y?"
-- **Don't silently substitute**
+**Plan says X, but X doesn't work:** Explain the conflict, propose alternative, ask
+before substituting. Never silently change the plan.
 
-**Task is much bigger than expected:**
-- Split it into subtasks
-- Tell the user you're splitting and why
-- These subtasks count against your batch
+**Task is too big:** Split into subtasks, tell the user, count against your batch.
 
-**Previous task needs changing:**
-- Explain what and why
-- Make the change
-- Re-verify affected acceptance criteria
-- Re-run quality gates
-- Note it in your batch report
+**Previous task needs changing:** Explain, fix, re-verify acceptance criteria, re-run
+quality gates, note in batch report.
 
-**A nice-to-have improvement occurs to you:**
-- Note it but don't implement it
-- Mention it in the batch report: "Noticed we could also X — worth adding to the plan?"
-- Stay focused on the plan
+**Batch broke everything (rollback):** Find last good checkpoint commit (`git log`),
+`git reset --hard {commit}` (ask permission), update `last_completed_task`, analyze
+root cause, re-attempt with different approach. If root cause is in the plan, flag it.
+
+**Nice-to-have idea:** Note in batch report, don't implement. Stay on plan.
 
 ---
 
 ## Code Style Defaults
 
-Unless project config says otherwise:
-
-- **Semicolons**: Yes
-- **Quotes**: Single quotes
-- **Indentation**: 2 spaces
-- **Trailing commas**: Yes (ES5+)
-- **Line length**: ~100 characters soft limit
-- **File naming**: kebab-case (`user-service.ts`), PascalCase for components
-- **Exports**: Named exports preferred (except React components)
-- **Async**: Always async/await over raw promises
-- **Errors**: Custom error classes extending `Error` for typed handling
-
-If the project has existing style (eslintrc, prettierrc, editorconfig), follow that instead.
+Follow the **Code Style Defaults** from `implementation/references/implementation-standards.md`
+(semicolons, single quotes, 2-space indent, trailing commas, kebab-case files). If the
+project has existing style config (eslintrc, prettierrc, editorconfig), follow that instead.
 
 ---
 
@@ -450,98 +438,59 @@ Update `pipeline-state.json`:
   "phases": {
     "implementation": {
       "status": "completed",
-      "completed_at": "{ISO timestamp}",
-      "outputs": ["{list of files}"],
+      "completed_at": "{ISO}",
+      "outputs": ["{files}"],
       "tasks_completed": "{N}",
-      "deviations": ["{any plan deviations}"],
-      "flagged_issues": ["{issues noted during implementation}"],
-      "self_review_flags": ["{items flagged for code review}"],
-      "tech_stack": {
-        "runtime": "{detected}",
-        "framework": "{detected}",
-        "test_runner": "{detected}",
-        "build_tool": "{detected}",
-        "patterns": ["{detected patterns}"]
-      }
+      "last_completed_task": "{N}",
+      "deviations": ["{plan deviations}"],
+      "security_gate": { "npm_audit": "pass", "manual_checks": "pass" },
+      "self_review_flags": ["{items for code review}"],
+      "tdd_tests_written": ["{test files}"],
+      "finding_outcomes": ["{fix mode — see implementation-standards.md}"],
+      "tech_stack": { "runtime": "...", "framework": "...", "test_runner": "...", "build_tool": "..." }
     },
-    "code-review": { "status": "pending" },
-    ...
+    "code-review": { "status": "pending" }
   }
 }
 ```
 
-**Git commit message:**
+**Git commit message:** Follow the **Commit Message Format** from
+`implementation/references/implementation-standards.md`. Present the commit message in
+a fenced code block so the user can copy and paste. Offer to commit.
 
-Always provide a ready-to-use commit message at the end of implementation. Present it
-in a fenced code block so the user can copy and paste it directly.
+**Finding outcome tracking (fix mode only):** Follow the **Finding Outcome Tracking**
+format from `implementation/references/implementation-standards.md`. Produce a finding
+outcomes table for every `[CR-NNN]` from `fix-plan.md`. Include in the batch report.
 
-Use [Conventional Commits](https://www.conventionalcommits.org/) format. The message must include:
-
-1. **Type + scope**: `feat(module)`, `fix(module)`, or `refactor(module)`
-2. **Short summary** (first line, max 72 chars): what was built
-3. **Body**: list of what was implemented, grouped logically
-4. **Footer**: note deviations, flagged issues, or items for review
-
-```
-feat(url-shortener): implement URL shortening API with analytics
-
-- Add URL creation, resolution (302 redirect), and deletion endpoints
-- Add click tracking with fire-and-forget analytics recording
-- Set up PostgreSQL (Prisma) + Redis (ioredis) infrastructure
-- Add sliding-window rate limiting via Redis sorted sets
-- Add centralized error handling with custom error classes
-- Add health check endpoint with DB and Redis status
-- Configure TypeScript strict mode, Vitest, and ESLint
-
-Deviations from plan:
-- Used ioredis instead of node-redis (better TypeScript support)
-
-Flagged for review:
-- Rate limiter cleanup of expired sorted set members
-- Click recording error handling (fire-and-forget)
-```
-
-> "Here's a commit message you can use. Want me to commit, or would you prefer to adjust it first?"
-
-If the user is in **fix mode** (applying `fix-plan.md` or `fix-test-plan.md`), use:
-
-```
-fix(url-shortener): address code review findings [CR-001..CR-004]
-
-- Add timeout on redirect DB fallback (CR-001)
-- Clean up expired rate limit entries (CR-002)
-- Log failed click recordings (CR-003)
-- Report Redis status in health check (CR-004)
-```
-
-**Handoff:**
+**Handoff:** Resolve the next phase using the Handoff Resolution algorithm from the
+Router skill: read `pipeline-state.json`, find the next phase in `selected_phases`
+after "implementation" (default: code-review). Present:
 > "Implementation complete — {N} tasks done, all quality gates passing. The next step
-> is **Code Review**, which will do a thorough review of all code against the plan and
-> spec. I've flagged {N} items for the reviewer to look at. Want me to start the review?"
+> is **{resolved_next_phase}**. I've flagged {N} items for the next phase to check."
+If no more selected phases remain:
+> "Implementation complete — {N} tasks done, all quality gates passing. That completes
+> the selected pipeline scope."
+
+If the conversation is long (many batches, extensive discussion), suggest a session split:
+> "This conversation has a lot of context from implementation. You can start a new
+> session and say 'continue' for a cleaner next phase — all artifacts are on disk."
+
+Otherwise, ask if the user wants to proceed to the resolved next phase.
 
 ---
 
 ## Key Principles
 
-- **Follow the plan exactly** — Don't improvise features. Don't skip tasks. Don't reorder
-  without reason. The plan exists for a reason.
-- **Write clean code** — Code should read like well-written prose. Names reveal intent,
-  functions are small and do one thing, errors are handled cleanly, duplication is
-  eliminated. Optimize for the reader, not the writer — code is read 10x more than written.
-- **Stop when blocked, don't guess** — It's always better to ask than to build on wrong
-  assumptions. Surface blockers immediately.
-- **Batch, gate, review, report** — Work in batches of ~3 tasks, run quality gates,
-  self-review, then stop and report. Wait for user feedback before continuing.
-- **Quality gates are non-negotiable** — Don't report a batch complete if the build is
-  broken or types don't check. Fix it first.
-- **Self-review catches smells and security** — Check for code smells (long functions,
-  bad names, duplication), security holes, and pattern violations. The Code Review skill
-  handles the deeper analysis.
-- **Detect and match the stack** — Formally detect the tech stack before coding. Match
-  every pattern. Consistency beats cleverness.
-- **Flag, don't fix silently** — When you deviate from the plan, always tell the user why.
-- **Complete files, not stubs** — Every file should work when created.
-- **Boy Scout Rule** — Leave code a little better than you found it. Small improvements
-  add up over time.
-- **Note improvements, don't implement them** — Stay focused on the plan. Mention ideas
-  in batch reports for the user to decide on.
+- **Follow the plan exactly** — don't improvise, skip, or reorder without reason.
+- **TDD for pure logic** — `tdd` tasks get failing test first, then code, then refactor.
+- **Write clean code** — names reveal intent, small functions, clean errors, DRY.
+- **Stop when blocked** — ask rather than guess or build on wrong assumptions.
+- **Batch, gate, review, report** — 3 tasks, quality gates, self-review, report, wait.
+- **Quality gates are non-negotiable** — don't report until build + types + lint + tests pass.
+- **Security gate is non-negotiable** — npm audit, input validation, no secrets, auth checks.
+- **Self-review catches smells** — code smells + deeper security + pattern violations.
+- **Detect and match the stack** — consistency with existing codebase beats cleverness.
+- **Flag, don't fix silently** — when deviating from plan, tell the user why.
+- **Complete files, not stubs** — every file should work when created.
+- **Boy Scout Rule** — small incremental improvements when touching a file.
+- **Note improvements, don't implement** — mention ideas in batch reports for user to decide.

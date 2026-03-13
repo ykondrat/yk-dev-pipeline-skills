@@ -18,6 +18,7 @@ A collection of **Claude AI skills** (structured instruction files) that guide C
 
 ## Features
 
+- 🎛️ **Phase Selection** — Choose which phases to run: full pipeline, quick build, review & polish, or custom selection
 - 🧠 **Brainstorm** — Deep-dive requirements gathering with conversational questioning
 - 🔎 **Investigation** — Systematic debugging, root cause analysis, refactoring assessment, performance investigation
 - 📋 **Planning** — Task breakdown with dependencies, acceptance criteria, file structure, and archived plans in `docs/plans/`
@@ -96,7 +97,7 @@ Always read reference files when the skill instructs you to.
 
 📖 **[Read the complete USAGE.md guide](USAGE.md)** for detailed instructions, workflows, and examples.
 
-After installation, just say: **"Build me a REST API for a task management app"** — Claude will start the pipeline automatically.
+After installation, just say: **"Build me a REST API for a task management app"** — Claude will start the pipeline automatically. You can also specify which phases to run: **"Build me a REST API, skip review and docs"**.
 
 ## Pipeline Flow
 
@@ -105,25 +106,26 @@ After installation, just say: **"Build me a REST API for a task management app"*
 │ 1a Brainstorm│──┐
 │  spec.md     │  │  ┌──────────┐     ┌────────────────┐
 │  design doc  │  ├─▶│ Planning │────▶│ Implementation │
-└──────────────┘  │  │          │     │                │
-┌──────────────┐  │  │ plan.md  │     │  working code  │
-│1b Investigate│──┘  │ archived │     │                │
-│  spec.md     │     └──────────┘     └───────┬────────┘
-│  inv. report │                               │
-└──────────────┘                               ▼
-┌─────────────┐     ┌────────────────┐     ┌────────────────┐
-│Documentation │◀────│    Testing     │◀────│  Code Review   │
-│              │     │                │     │                │
-│ README, docs │     │ test-report.md │     │ review.md      │
-│ API, deploy  │     │ fix-test-plan  │     │ fix-plan.md    │
-└─────────────┘     └───────┬────────┘     └────────┬───────┘
-                          │                    │
-                          │           (if blocked, loops back
-                          │            to Implementation)
-                          │
-                 (if tests keep failing,
-                  user chooses: skip or
-                  loop back to Implementation)
+└──────────────┘  │  │          │     │                │◀────────┐
+┌──────────────┐  │  │ plan.md  │     │  working code  │         |
+│1b Investigate│──┘  │ archived │     │                │         |
+│  spec.md     │     └──────────┘     └────────┬───────┘         |
+│  inv. report │                               │                 |
+└──────────────┘                               ▼                 |
+┌──────────────┐     ┌────────────────┐     ┌────────────────┐   |
+│Documentation │     │    Testing     │     │  Code Review   │   |
+│              │     │                │     │                │   |
+│ README, docs │◀─┐  │ test-report.md │◀─ ┐ │ review.md      │   |
+│ API, deploy  │  │  │ fix-test-plan  │   │ │ fix-plan.md    │   |
+└──────────────┘  │  └───────┬────────┘   | └────────┬───────┘   |
+                  │          │            |          ▼           |
+                  │          │            |  ┌────────────────┐  |
+                  │          │            └◀─│- if (blocked)+ │─▶┘
+                  │          │               └────────────────┘  │
+                  │          ▼                                   │
+                  │  ┌────────────────┐                          │
+                  └◀─│- if (failing)+ │─────────────────────────▶┘
+                     └────────────────┘
 ```
 
 Each phase:
@@ -190,7 +192,9 @@ yk-dev-pipeline-skills/
 │       └── skills/
 │           ├── SKILL.md                 ← Pipeline router
 │           ├── brainstorm/
-│           │   └── SKILL.md             ← Phase 1a
+│           │   ├── SKILL.md             ← Phase 1a
+│           │   └── references/
+│           │       └── creativity-techniques.md
 │           ├── investigation/
 │           │   ├── SKILL.md             ← Phase 1b
 │           │   └── references/
@@ -201,6 +205,9 @@ yk-dev-pipeline-skills/
 │           │   ├── SKILL.md             ← Phase 3
 │           │   └── references/
 │           │       ├── js-ts-best-practices.md
+│           │       ├── clean-code-principles.md
+│           │       ├── security-patterns.md
+│           │       ├── implementation-standards.md
 │           │       ├── databases-sql.md
 │           │       ├── databases-nosql.md
 │           │       ├── databases-redis.md
@@ -250,9 +257,10 @@ Claude AI skills are markdown files with structured instructions. When Claude re
 1. **Progressive loading** — Claude reads only the skills it needs for the current phase, not everything at once
 2. **Reference on demand** — Deep checklists and best practices are in separate files, loaded when needed
 3. **Artifact chaining** — Each phase produces files (spec.md, plan.md, etc.) that the next phase reads. Plans and design docs are also archived in `docs/plans/` with date prefixes
-4. **State tracking** — `pipeline-state.json` tracks progress across phases
-5. **Human in the loop** — Claude suggests the next phase, but waits for user confirmation
-6. **Router-first routing** — The pipeline router handles all general requests ("build me...", "fix this bug", "next step") and routes to the correct phase using intent detection rules and pipeline state. Individual phases only trigger on explicit phase-name mentions.
+4. **State tracking** — `pipeline-state.json` tracks progress across phases, including which phases are selected
+5. **Phase selection** — Users choose which phases to run (full, quick build, review & polish, or custom). Handoff resolution dynamically determines the next phase based on the selection
+6. **Human in the loop** — Claude suggests the next phase, but waits for user confirmation
+7. **Router-first routing** — The pipeline router handles all general requests ("build me...", "fix this bug", "next step") and routes to the correct phase using 6 intent detection rules (0-5) and pipeline state. Individual phases only trigger on explicit phase-name mentions.
 
 ## Contributing
 

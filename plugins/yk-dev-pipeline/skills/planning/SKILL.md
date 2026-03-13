@@ -122,11 +122,44 @@ Break the implementation into ordered tasks. Each task should be:
 ### Task {N}: {Short descriptive title}
 - **Files**: {files to create or modify}
 - **Depends on**: {task numbers this depends on, or "none"}
+- **Test mode**: {tdd | test-after | no-test}
 - **Description**: {what to do, in enough detail that implementation doesn't need to guess}
 - **Acceptance criteria**:
   - {specific, verifiable condition}
   - {another condition}
+- **Test cases** (for tdd tasks):
+  - `it('should {expected behavior}')` — {assertion intent}
+  - `it('should {handle edge case}')` — {assertion intent}
 - **Notes**: {gotchas, edge cases, or implementation hints — optional}
+```
+
+**Test mode classification — assign to every task:**
+
+| Test mode | When to use | What happens |
+|-----------|------------|--------------|
+| `tdd` | Pure functions, domain logic, validators, utilities, data transformations | Implementation writes failing test first, then implements to pass |
+| `test-after` | API routes, middleware, integration points, config, entry points | Implementation writes code normally; testing phase adds integration/E2E tests |
+| `no-test` | Type definitions, interfaces, constants, scaffolding (package.json, tsconfig) | No tests — verified by compiler or existence |
+
+**Test case sketches for `tdd` tasks:** Include 2-5 `it('should ...')` descriptions that
+capture the acceptance criteria as test assertions. These are NOT full test code — just
+the test name and what to assert. They tell implementation exactly what to test first.
+
+```markdown
+### Task 5: Create URL validation utility
+- **Files**: `src/utils/validate-url.ts`
+- **Depends on**: Task 2 (types)
+- **Test mode**: tdd
+- **Description**: Validate and normalize user-supplied URLs...
+- **Acceptance criteria**:
+  - Accepts valid HTTP/HTTPS URLs
+  - Rejects non-HTTP protocols (javascript:, data:, ftp:)
+  - Normalizes trailing slashes
+- **Test cases**:
+  - `it('should accept valid HTTPS URLs')` — returns normalized URL
+  - `it('should reject javascript: protocol')` — throws ValidationError
+  - `it('should reject empty string')` — throws ValidationError
+  - `it('should normalize trailing slash')` — strips trailing /
 ```
 
 **Typical task ordering pattern:**
@@ -219,13 +252,30 @@ Task 1 (scaffold)
       └── Task 5 (another module)
 ```
 
+## Test Strategy
+- **TDD tasks**: {list task numbers} — unit tests written first during implementation
+- **Test-after tasks**: {list task numbers} — tested in Phase 5 (integration, E2E, API)
+- **No-test tasks**: {list task numbers} — compiler-verified (types, config, scaffolding)
+- **Test runner**: {vitest | jest | detected from existing project}
+- **Test location**: {src/**/*.test.ts | tests/ | __tests__/}
+
+## Security Requirements
+- **Sensitive data**: {what data is sensitive, classification (PII, credentials, financial)}
+- **Auth strategy**: {JWT, session cookies, API keys — from spec's threat model}
+- **Public endpoints**: {list endpoints that don't require auth}
+- **Protected endpoints**: {list endpoints that require auth + what authorization checks}
+- **Input validation**: {which endpoints accept external input, what validation is needed}
+- **Rate limiting**: {which endpoints need rate limits, what thresholds}
+- **Security headers**: {CSP policy, CORS origins — if web-facing}
+- **Security tasks**: {reference task numbers that implement security controls}
+
 ## Risk Notes
 - {Any risks, unknowns, or decisions deferred from brainstorm}
 - {Dependencies that might cause issues}
 - {Areas where the plan might need adjustment during implementation}
 
 ## Next Step
-Run the **implementation** skill to begin executing this plan.
+Use the Handoff Resolution algorithm from the Router to determine the next phase.
 ```
 
 ### Step 7: Update Pipeline State & Handoff
@@ -252,9 +302,14 @@ Update `pipeline-state.json`:
 **Git (optional):** Offer to commit:
 > "Want me to commit the implementation plan to git?"
 
-**Handoff:**
+**Handoff:** Resolve the next phase using the Handoff Resolution algorithm from the
+Router skill: read `pipeline-state.json`, find the next phase in `selected_phases`
+after "planning" (default: implementation). Present:
 > "The implementation plan is ready — {N} tasks across {N} phases. The next step is
-> **Implementation**, which will work through the plan task by task. Want me to start?"
+> **{resolved_next_phase}**. Want me to start?"
+If no more selected phases remain:
+> "The implementation plan is ready — {N} tasks across {N} phases. That completes
+> the selected pipeline scope."
 
 ---
 
@@ -299,4 +354,9 @@ If the spec has gaps or open questions:
 - **Think about the reviewer** — The code-review skill will use this plan to verify
   implementation. Make the plan reviewable.
 - **Think about the tester** — The testing skill will use acceptance criteria to write tests.
-  Make criteria specific and testable.
+  Make criteria specific and testable. Classify every task with a test mode (tdd/test-after/no-test)
+  so implementation knows what to test first and testing knows what's already covered.
+- **Security requirements are mandatory** — If the spec has a threat model or security
+  section, translate it into concrete tasks and a Security Requirements section in plan.md.
+  If the spec doesn't have one, add security tasks for: input validation on all endpoints,
+  auth/authz middleware, rate limiting, security headers, and secrets management.

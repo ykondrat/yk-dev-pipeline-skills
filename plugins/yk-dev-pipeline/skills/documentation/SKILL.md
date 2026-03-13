@@ -50,6 +50,54 @@ read the file below. Do not skip this step.
 
 ---
 
+## Documentation Modes
+
+**Full Generation** (default, first pass): Generate all docs from scratch.
+**Update Mode** (incremental): Update only docs affected by code changes since last
+documentation. Triggered by "update docs", "refresh docs", "docs are stale", or when
+re-running the pipeline on an existing documented project.
+
+### Detecting Update Mode
+
+Check `pipeline-state.json` for:
+- `documentation.status === "completed"` — docs were previously generated
+- `documentation.last_documented_commit` — the git commit when docs were last generated
+
+If both exist, compare `last_documented_commit` to HEAD:
+```bash
+git diff {last_documented_commit}..HEAD --name-only
+```
+
+If there are changes, announce update mode:
+> "Previous docs exist (generated at commit {hash}). {N} files changed since then.
+> I'll update only affected documentation sections."
+
+Map changed files to affected doc sections:
+| Changed file type | Affected docs |
+|---|---|
+| Route/handler files | API docs, README endpoints section |
+| Config / env handling | Deployment guide env table, README config section |
+| Public exports / types | API reference, architecture data models |
+| package.json (scripts, deps) | README setup/install, contributing guide |
+| New source modules | Architecture docs, README feature list |
+| Test files | No doc update needed (unless coverage changes significantly) |
+
+### Drift Detection (Standalone)
+
+Can run anytime — triggered by "check docs", "are docs up to date?", "doc health".
+Without generating or changing anything, compare existing docs against current code:
+
+1. **Env var check** — compare env vars listed in docs vs `process.env.*` in source
+2. **Endpoint check** — compare endpoints in API docs vs route definitions
+3. **Feature check** — compare features in README vs actual exports/endpoints
+4. **Command check** — compare CLI commands in docs vs registered commands in code
+5. **Dependency check** — compare deps listed in docs vs package.json
+
+Report drift as: current (matches code), stale (exists but outdated), missing (in code
+but not in docs).
+
+---
+
 ## The Process
 
 ### Step 1: Scope and Audience
@@ -139,7 +187,75 @@ After generating all docs, verify:
 
 **If anything in the docs doesn't match the code, fix the docs. Never let docs and code disagree.**
 
-### Step 6: Finalize and Report
+### Step 6: Doc Coverage Analysis
+
+Inventory the project's public API surface and check what's documented:
+
+**Inventory these categories:**
+1. **Public exports** — every `export` from package entry points (for libraries)
+2. **HTTP endpoints** — every registered route with method, path, and handler
+3. **Environment variables** — every `process.env.*` or config reference
+4. **Error types** — every custom error class or error code
+5. **CLI commands** — every registered command and flag (for CLI tools)
+
+**For each item, classify:**
+- **Documented** — appears in docs with description and example
+- **Mentioned** — appears in docs but lacks description or example
+- **Undocumented** — exists in code but not in any doc
+
+**Target: 100% of public API surface documented.** If an export/endpoint/env var is
+intentionally internal, it should be marked `@internal` in JSDoc.
+
+**Read `doc_impacts` from code review** (if available in `pipeline-state.json`). These
+are changes the reviewer flagged as requiring doc updates — make sure each one is covered.
+
+### Step 7: Generate Doc Report
+
+Create `{project-dir}/doc-report.md`:
+
+```markdown
+# Documentation Report
+
+## Summary
+- **Mode**: Full / Update
+- **Docs generated**: {list}
+- **Verified against code**: ✓
+
+## Doc Coverage
+| Category | Total | Documented | Mentioned | Undocumented | Coverage |
+|----------|-------|-----------|-----------|-------------|----------|
+| Public exports | {N} | {N} | {N} | {N} | {N}% |
+| HTTP endpoints | {N} | {N} | {N} | {N} | {N}% |
+| Environment variables | {N} | {N} | {N} | {N} | {N}% |
+| Error types | {N} | {N} | {N} | {N} | {N}% |
+| CLI commands | {N} | {N} | {N} | {N} | {N}% |
+| **Total** | **{N}** | **{N}** | **{N}** | **{N}** | **{N}%** |
+
+## Undocumented Items
+{List each undocumented item with its file:line location.
+Mark items that are intentionally internal (@internal).}
+
+## Cross-Reference Validation
+| Doc Claim | Source Location | Status |
+|-----------|----------------|--------|
+| "POST /api/users creates a user" | src/routes/users.ts:23 | ✓ Verified |
+| "Requires DATABASE_URL env var" | src/config.ts:5 | ✓ Verified |
+
+## Drift Analysis (update mode only)
+| Section | Status | Details |
+|---------|--------|---------|
+| API endpoints | Current | No endpoint changes |
+| Env vars | Stale | Added REDIS_URL, not in docs → fixed |
+| README features | Current | No new features |
+
+## Review Doc Impacts (if code review flagged changes)
+| Impact | Source | Doc Updated |
+|--------|--------|-------------|
+| New endpoint POST /api/tokens | [CR-012] | ✓ Added to api.md |
+| Changed auth middleware signature | [CR-015] | ✓ Updated architecture.md |
+```
+
+### Step 8: Finalize and Report
 
 Create `docs/` structure:
 ```
@@ -170,7 +286,16 @@ Update `pipeline-state.json`:
         "docs/deployment.md"
       ],
       "doc_format": "markdown | markdown+openapi | markdown+typedoc",
-      "verified": true
+      "mode": "full | update",
+      "last_documented_commit": "{git commit hash}",
+      "verified": true,
+      "doc_coverage": {
+        "public_exports": "{N}/{N}",
+        "endpoints": "{N}/{N}",
+        "env_vars": "{N}/{N}",
+        "error_types": "{N}/{N}",
+        "overall": "{N}%"
+      }
     }
   },
   "pipeline_status": "completed"
@@ -188,12 +313,13 @@ Update `pipeline-state.json`:
 > - docs/deployment.md — deployment guide with env vars
 > - CONTRIBUTING.md — development setup and conventions
 > - CHANGELOG.md — initial release notes
+> - doc-report.md — coverage analysis and cross-reference validation
 > - JSDoc added to {N} public exports
 >
-> All documentation verified against actual code.
+> Doc coverage: {N}% of public API surface documented. All docs verified against code.
 >
-> **The dev pipeline is complete.** The project has been brainstormed, planned,
-> implemented, reviewed, tested, and documented."
+> **The dev pipeline is complete for the selected scope.** Completed phases:
+> {list the phases from `selected_phases` that have status "completed"}."
 
 ---
 
@@ -208,3 +334,7 @@ Update `pipeline-state.json`:
 - **README is king** — if someone reads only one doc, it should be README. Make it complete.
 - **No aspirational docs** — only document what exists. If a feature is planned but not
   built, it doesn't go in docs.
+- **Update, don't regenerate** — when docs exist and code changed, update only affected
+  sections. Drift detection prevents stale docs.
+- **100% public API coverage** — every export, endpoint, env var, and error type that's
+  part of the public surface must be documented. Track coverage in doc-report.md.

@@ -1,7 +1,7 @@
 {
   "$schema": "https://agentskills.io/schema.json",
   "name": "yk-dev-pipeline-skills",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "Complete 6-phase JS/TS development pipeline for Claude Code",
   "author": "Yevhen Kondratyev",
   "license": "MIT",

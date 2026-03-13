@@ -12,7 +12,7 @@ labels: new-reference
 <!-- implementation / code-review / testing / other -->
 
 ## What should it cover?
-<!-- Key topics, patterns, anti-patterns -->
+<!-- Key topics, patterns, antipatterns -->
 
 ## Would you like to write it?
 <!-- We welcome PRs! -->

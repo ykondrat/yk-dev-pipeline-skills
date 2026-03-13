@@ -51,6 +51,9 @@ Just describe what you want — the Router detects your intent and routes to the
 "Build me a REST API for a blog"
 → Router detects build-something intent → Phase 1a (Brainstorm)
 
+"Build me an API, skip review and docs"
+→ Router extracts selected_phases via Rule 0 → Brainstorm (phases: brainstorm, planning, implementation, testing)
+
 "Fix this bug in the auth module"
 → Router detects fix-something intent → Phase 1b (Investigation)
 
@@ -61,7 +64,7 @@ Just describe what you want — the Router detects your intent and routes to the
 → Phase 5 (Testing) — works standalone
 
 "Next step" / "Continue"
-→ Router reads pipeline-state.json → routes to next incomplete phase
+→ Router reads pipeline-state.json → routes to next incomplete phase (respects selected_phases)
 ```
 
 ---
@@ -164,6 +167,7 @@ The pipeline uses a **router-first** architecture. Most requests go through the 
 
 The Router applies these rules in order:
 
+0. **Phase selection from natural language.** If the request includes phase exclusion/inclusion language ("skip review and docs", "just brainstorm and plan"), extract `selected_phases` without showing the menu. Phase names are normalized (e.g., "impl" → implementation, "cr" → code-review, "docs" → documentation).
 1. **Pipeline state takes priority.** If `pipeline-state.json` exists with an active pipeline, check if the request relates to the current pipeline before starting a new one.
 2. **Build-something intent → Brainstorm.** Keywords: "build", "create", "develop", "new feature", "new project", "add a feature", "I want to make".
 3. **Fix-something intent → Investigation.** Keywords: "fix", "bug", "broken", "debug", "refactor", "slow", "performance", "tech debt", "optimize", "root cause".
@@ -187,24 +191,56 @@ Skills automatically check `pipeline-state.json`:
 
 ### Continuation Logic
 
-When you say "next step", "continue", or "go ahead", the Router reads `pipeline-state.json` and routes to the next action:
+When you say "next step", "continue", or "go ahead", the Router reads `pipeline-state.json` and routes to the next action. If `selected_phases` is present, phases not in the list are skipped when resolving the next pending phase.
 
 | Current State | Next Action |
 |---------------|-------------|
-| No pipeline-state.json | Ask: new project (brainstorm) or investigate existing code? |
+| No pipeline-state.json | Show Phase Selection Menu, then ask: new project (brainstorm) or investigate existing code? |
 | brainstorm/investigation: completed, planning: pending | Start Planning |
 | planning: completed, implementation: pending | Start Implementation |
 | implementation: completed, code-review: pending | Start Code-Review |
 | code-review: completed (approved), testing: pending | Start Testing |
-| code-review: blocked | Start Implementation (fix mode — reads fix-plan.md) |
+| code-review: blocked | Start Implementation (fix mode — reads fix-plan.md) — always, regardless of `selected_phases` |
 | testing: completed, documentation: pending | Start Documentation |
-| testing: blocked | Start Implementation (test-fix mode — reads fix-test-plan.md) |
+| testing: blocked | Start Implementation (test-fix mode — reads fix-test-plan.md) — always, regardless of `selected_phases` |
 | documentation: completed | Pipeline complete — summarize and suggest new work |
 | Any phase: in-progress | Resume that phase |
+
+**Note:** Fix loops (code-review blocked → implementation, testing blocked → implementation) always activate even if implementation wasn't in the selected phases — these are mandatory recovery loops.
 
 ---
 
 ## Common Workflows
+
+### Phase Selection
+
+When starting a new pipeline, Claude presents a phase selection menu:
+
+```
+Claude: "Which phases do you want to include?"
+  [A] Full pipeline (all phases) — recommended
+  [B] Quick build (brainstorm → planning → implementation)
+  [C] Review & polish (code review → testing → documentation)
+  [D] Custom — pick individual phases
+
+You: "B"  →  Runs brainstorm, planning, implementation only
+You: "D"  →  Claude asks which phases, e.g., "brainstorm, planning, testing"
+```
+
+You can also skip the menu entirely using natural language:
+
+```
+"Build me an API, skip review and docs"
+→ selected_phases: [brainstorm, planning, implementation, testing]
+
+"Just brainstorm and plan this"
+→ selected_phases: [brainstorm, planning]
+
+"Full pipeline"
+→ selected_phases: all phases (menu skipped)
+```
+
+Phase names are flexible — "impl", "cr", "docs", "bs", "inv", "3", "4" all work.
 
 ### Workflow 1: Full Pipeline (New Project)
 
@@ -447,6 +483,7 @@ The pipeline creates `pipeline-state.json` at your project root:
 {
   "project_name": "blog-api",
   "created_at": "2026-02-13T10:30:00Z",
+  "selected_phases": ["brainstorm", "planning", "implementation", "code-review", "testing", "documentation"],
   "current_phase": "implementation",
   "phases": {
     "brainstorm": {
@@ -484,8 +521,8 @@ The pipeline creates `pipeline-state.json` at your project root:
 This file helps Claude:
 - Remember progress across sessions
 - Resume from interruptions
-- Skip completed phases
-- Track outputs and decisions
+- Skip completed and deselected phases
+- Track outputs, decisions, and which phases were selected
 
 ---
 
@@ -493,7 +530,7 @@ This file helps Claude:
 
 1. **Trust the Process**: Let each phase complete before moving to the next
 2. **Review Incrementally**: During brainstorm and planning, validate in small chunks
-3. **Don't Skip Phases**: Each phase builds on the previous one's outputs
+3. **Use Phase Selection**: Choose "Quick build" for prototypes or "Full pipeline" for production code — don't manually skip phases
 4. **Use Quality Gates**: Let implementation run all checks after each batch
 5. **Fix Review Issues**: Don't proceed to testing until code review approves
 6. **Handle Test Failures**: If tests keep failing, choose "go back to implementation" to fix root causes rather than skipping

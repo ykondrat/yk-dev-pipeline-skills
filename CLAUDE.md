@@ -19,18 +19,23 @@ This repo is structured as a **Claude Code plugin marketplace** with one plugin:
 - `.claude-plugin/marketplace.json` — **Marketplace catalog** (`owner`, `plugins` with `source` paths). Validated by Claude Code on `/plugin marketplace add`.
 - `plugins/yk-dev-pipeline/` — **Plugin directory** containing the dev pipeline.
   - `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` — Minimal plugin manifest (`name`, `version`, `description`, `author`). Skills are auto-discovered from the `skills/` directory.
-  - `plugins/yk-dev-pipeline/skills/SKILL.md` — **Router/entry point**. Single entry point for all general requests. Contains Intent Detection Rules (5 rules for classifying user requests) and Continuation Logic (state-to-next-action routing table). Manages `pipeline-state.json`.
+  - `plugins/yk-dev-pipeline/skills/SKILL.md` — **Router/entry point**. Single entry point for all general requests. Contains Phase Selection Menu (4 presets + custom), Intent Detection Rules (6 rules, 0-5, for classifying user requests — Rule 0 extracts `selected_phases` from natural language), Continuation Logic (state-to-next-action routing table with `selected_phases` awareness), and Handoff Resolution algorithm (centralized next-phase resolution used by all phase skills). Manages `pipeline-state.json`.
   - `plugins/yk-dev-pipeline/skills/{phase}/SKILL.md` — Phase-specific instructions (brainstorm, investigation, planning, implementation, code-review, testing, documentation).
   - `plugins/yk-dev-pipeline/skills/investigation/references/` — Investigation patterns: debugging strategies, root cause categories, refactoring analysis, performance investigation, evidence documentation.
-  - `plugins/yk-dev-pipeline/skills/implementation/references/` — Deep reference materials: JS/TS best practices, SQL/NoSQL/Redis database patterns, web framework patterns (Express/Fastify/Hono/Next.js), frontend framework patterns (React/Next.js/Vue 3).
+  - `plugins/yk-dev-pipeline/skills/brainstorm/references/` — Creativity techniques: pre-mortem, inversion, stakeholder role-play, assumption surfacing, diverge-converge process, technique selection matrix.
+  - `plugins/yk-dev-pipeline/skills/implementation/references/` — Deep reference materials: JS/TS best practices, Clean Code principles, security patterns, implementation standards (commit message format, finding outcome tracking, self-review checklist, scaffolding, code style defaults), SQL/NoSQL/Redis database patterns, web framework patterns (Express/Fastify/Hono/Next.js), frontend framework patterns (React/Next.js/Vue 3).
   - `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md` — All 18 review area checklists with severity guidance.
   - `plugins/yk-dev-pipeline/skills/testing/references/test-patterns.md` — Vitest reference, test writing patterns, factories, mocking, assertions, frontend testing, anti-patterns.
   - `plugins/yk-dev-pipeline/skills/documentation/references/doc-templates.md` — Templates for all 7 doc types (README, API, architecture, etc.).
 - `examples/` — Example artifacts: `pipeline-state.example.json`, `pipeline-state-investigation.example.json`, `plan.example.md`, `review.example.md`, `fix-plan.example.md`, `fix-test-plan.example.md`, `test-report.example.md`.
+- `TESTING.md` — **Skill testing guide**: test prompts per skill, output quality criteria (checklists for each skill's output), before/after comparison methodology, model matrix, regression markers for targeted verification after changes.
 
 ## No Build/Test/Lint Commands
 
-There are no package.json, build tools, or test runners. "Testing" a skill means uploading it to a Claude conversation, giving a realistic task, and verifying Claude follows the instructions correctly.
+There are no package.json, build tools, or test runners. "Testing" a skill means running
+it in a real Claude conversation and verifying Claude follows the instructions correctly.
+See `TESTING.md` for the full testing guide: test prompts per skill, output quality
+criteria, before/after comparison methodology, model matrix, and regression markers.
 
 ## Skill File Format
 
@@ -47,7 +52,7 @@ Every SKILL.md uses:
 - **Artifact chaining** — each phase produces files the next phase reads (spec.md → plan.md → code → review.md → test-report.md → docs). Design docs, investigation reports, and plans are also archived in `docs/plans/` with date prefixes (e.g., `YYYY-MM-DD-{topic}-design.md`, `YYYY-MM-DD-{topic}-investigation.md`, `YYYY-MM-DD-{topic}-plan.md`)
 - **Fix plan files** — code review produces `fix-plan.md`, testing produces `fix-test-plan.md` when blocked. The implementation skill reads all three: `plan.md`, `fix-plan.md`, `fix-test-plan.md`
 - **Failure recovery loops** — code review can block and loop back to implementation; testing can block (status `"blocked"`) and loop back to implementation, or skip failing tests (marked `.todo`) — user decides via `AskUserQuestion`
-- **Pipeline state** tracked in `pipeline-state.json` at the project root (statuses: `pending`, `in-progress`, `completed`, `blocked`)
+- **Pipeline state** tracked in `pipeline-state.json` at the project root (statuses: `pending`, `in-progress`, `completed`, `blocked`). Includes `selected_phases` array — if absent, all phases are selected (backward compatible). Handoff Resolution algorithm in Router determines next phase dynamically based on this array.
 - **Review severity levels**: 🔴 Critical, 🟡 Major, 🔵 Minor, ⚪ Nitpick. Debatable findings are tagged `[DEBATABLE]` (not a separate severity level)
 - **Router-first routing** — The Router SKILL.md is the single entry point for all general requests. Phases 1a-3 have narrowed triggers (explicit phase-name mentions only); Phases 4-6 retain broad standalone triggers. "next step" / "continue" are exclusively Router-handled via the Continuation Logic table.
 
@@ -59,6 +64,12 @@ When modifying skills, preserve:
 - The artifact chaining between phases
 - Severity emoji conventions in review-related files
 - The "suggest next phase, wait for user confirmation" interaction pattern
+
+**After modifying a skill, consult `TESTING.md`:**
+1. Run at least one test prompt for the changed skill
+2. Check the output quality criteria for that skill
+3. Use regression markers to identify what else to verify
+4. For significant changes, do a before/after comparison
 
 ## Adding New Content
 

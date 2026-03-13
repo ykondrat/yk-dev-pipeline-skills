@@ -1,6 +1,6 @@
 {
   "name": "yk-dev-pipeline-skills",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "6-phase JS/TS development pipeline for Claude Code - from brainstorm (or investigation) to documentation",
   "keywords": [
     "claude-skill",

@@ -1,14 +1,12 @@
 ---
 name: yk-brainstorm
 description: >
-  Deep-dive brainstorming skill for JavaScript/TypeScript projects. Explores requirements
+  Deep-dive brainstorming skill for projects. Explores requirements
   through conversational questioning, proposes approaches with trade-offs, produces spec.md.
   DIRECT TRIGGER: "let's brainstorm", "brainstorm phase", "brainstorm this",
   "start brainstorming", "brainstorm session", "brainstorm with me",
   "run a brainstorm", "do a brainstorm", "kick off brainstorm".
   ROUTED FROM: Pipeline router when user intent is to build something new.
-  DO NOT USE FOR: General "I want to build..." or "new feature" requests — those go through
-  the pipeline router which handles intent detection and pipeline state.
   This is the first step in the dev-pipeline skill chain.
 metadata:
   recommended_model: opus
@@ -17,9 +15,9 @@ metadata:
 
 # Brainstorm — Dev Pipeline Step 1
 
-You are a senior product/engineering consultant running a collaborative brainstorming
-session. Your job is to deeply understand what the user wants to build, explore approaches,
-then produce a validated design — presented in small pieces, confirmed as you go.
+Collaborative brainstorming session. Deeply understand what the user wants to build,
+explore approaches, then produce a validated design — presented in small pieces, confirmed
+as you go.
 
 ## Extended Thinking
 
@@ -43,10 +41,16 @@ This skill is part of a 6-step development pipeline:
      ↑ you are here
 ```
 
-Each step produces artifacts the next step consumes. After brainstorm completes, suggest
-the user run the **planning** skill next.
+Each step produces artifacts the next step consumes. After brainstorm completes, use
+the Handoff Resolution algorithm from the Router to determine the next phase.
 
 Pipeline state is tracked in `pipeline-state.json` inside the project directory.
+
+## References
+
+**Load on demand during Step 4 (Explore Approaches):**
+- `brainstorm/references/creativity-techniques.md` — pre-mortem, inversion, stakeholder
+  role-play, assumption surfacing, diverge-converge process, and technique selection matrix
 
 ---
 
@@ -94,6 +98,10 @@ Formulate queries based on what you learned in Step 1 — don't use generic sear
 2-3 of the most relevant results in depth. Don't spray dozens of queries — quality over
 quantity.
 
+**Context efficiency:** Consider launching a sub-agent for web research. Have it return
+a concise summary (<200 words) of findings rather than keeping raw search results in the
+main conversation context. This keeps the brainstorm focused on design decisions.
+
 **Present findings to the user:**
 - Concise bullet-point summary of key findings
 - Note what should influence the design (popular patterns, pitfalls to avoid, recommended
@@ -138,7 +146,7 @@ topics that matter for this specific project.
 
 **Tech Stack & Architecture** (skip what you already know from project context)
 - Runtime, framework, package manager, build tools
-- TypeScript strictness, monorepo vs single package
+- Strictness, monorepo vs single package
 - Key dependencies they already know they want
 
 **Data & Integrations**
@@ -152,12 +160,21 @@ topics that matter for this specific project.
 - Malformed input handling
 - Graceful degradation vs hard failure preference
 
-**Security Considerations**
-- Input sanitization needs
-- Sensitive data handling (secrets, tokens, PII)
-- Web-specific: CORS, CSP, XSS, CSRF
-- CLI-specific: file permissions, path traversal
-- Scale depth to project — a static site has different security needs than an auth library
+**Security & Threat Modeling**
+- **Threat model (lightweight):** For each core feature, ask: "What could an attacker do
+  here?" Identify abuse scenarios (injection, unauthorized access, data exfiltration,
+  resource exhaustion). Scale depth to project risk — a static site needs less than an
+  auth library.
+- What data is sensitive? (PII, credentials, tokens, financial data) How is it stored,
+  transmitted, and accessed?
+- What endpoints or actions are public vs authenticated? What authorization model is needed?
+  (roles, ownership, admin-only operations)
+- Input sanitization needs — what external input does the system accept? (HTTP params,
+  file uploads, webhooks, CLI args)
+- Web-specific: CORS policy, CSP, XSS vectors, CSRF for cookie-based auth
+- CLI-specific: file permissions, path traversal, command injection via arguments
+- Rate limiting needs — which operations are expensive or abuse-prone?
+- Dependency trust boundary — does the project rely on packages handling sensitive data?
 
 **Deployment & Environment**
 - Where does this run? (local, CI/CD, cloud, serverless, edge)
@@ -173,21 +190,45 @@ topics that matter for this specific project.
 **Not every project needs every category.** A small CLI utility might only need 4-5 of
 these. A full-stack web app might need all of them. Read the room.
 
-### Step 4: Explore Approaches
+**Perspective check:** After covering core features, briefly consider the project from
+2-3 different angles — end user, attacker, on-call engineer. Surface 1-2 questions from
+each perspective that the linear Q&A might have missed. Present these as follow-up
+questions to the user, not as a monologue.
+
+### Step 4: Explore Approaches (Diverge-Converge)
 
 **[THINK DEEPLY]** Before presenting approaches, reason through the full solution space.
 Consider architectures you've seen work (and fail) for similar problems. Weigh maintenance
 burden, team skill requirements, scaling characteristics, and hidden costs of each option.
 
-Once you understand what they're building, propose 2-3 different approaches with trade-offs.
+**Load creativity techniques:** Use the Read tool to load
+`brainstorm/references/creativity-techniques.md`. Select 1-2 techniques using the
+technique selection matrix based on the project type.
 
-- **Lead with your recommendation** and explain why
-- Present alternatives conversationally, not as a dry comparison table
-- Highlight what each approach optimizes for and what it sacrifices
-- Let the user pick, then note the decision AND the reasoning
+**4a. Diverge — Generate approaches without judgment:**
+- Generate 3-5 distinct approaches. Include creative, unconventional options.
+- Note the core insight for each (what makes it different).
+- Apply the selected techniques to stretch thinking (e.g., pre-mortem to surface risks,
+  inversion to derive constraints, stakeholder role-play for blind spots).
+- **No evaluation during divergence.** Don't say "this one is better" yet.
+
+**4b. Converge — Evaluate and recommend:**
+- Evaluate each approach against requirements, constraints, and technique findings.
+- **Lead with your recommendation** and explain why.
+- Present alternatives conversationally — highlight what each optimizes for and sacrifices.
+- Let the user pick, then note the decision AND the reasoning.
+
+**4c. Assumption Surfacing — Challenge the chosen approach:**
+- After the user picks an approach, list every assumption it relies on (user, data,
+  infrastructure, scale, dependency, business assumptions).
+- Rate confidence (high/medium/low) and note what happens if each assumption is wrong.
+- For low-confidence assumptions, propose a design that works even if wrong, or flag as
+  an open question for the spec.
+- Present to the user: "Here are the assumptions this design relies on. Should we design
+  for any of these being wrong?"
 
 This step is critical. Don't skip it. Even if one approach seems obvious, articulating
-alternatives forces clarity and often surfaces assumptions.
+alternatives forces clarity and the diverge-converge structure prevents premature lock-in.
 
 ### Step 5: Present the Design in Sections
 
@@ -257,7 +298,7 @@ This is a streamlined reference for the planning skill to consume. Use this temp
 
 ## Tech Stack
 - **Runtime**: {Node.js/Deno/Bun/Browser}
-- **Language**: TypeScript ({strictness})
+- **Language**: ({strictness})
 - **Framework**: {if applicable}
 - **Build Tool**: {if applicable}
 - **Package Manager**: {npm/yarn/pnpm}
@@ -275,6 +316,13 @@ This is a streamlined reference for the planning skill to consume. Use this temp
 ## Security Considerations
 {Key concerns and mitigations}
 
+### Threat Model
+- **Sensitive data**: {what data is sensitive, how it's stored/transmitted}
+- **Auth model**: {public vs authenticated endpoints, authorization approach}
+- **Abuse scenarios**: {top 3-5 attack vectors relevant to this project}
+- **Rate limiting**: {which operations need rate limits}
+- **Input trust boundary**: {where external input enters the system}
+
 ## Deployment & Environment
 {Targets, compatibility, configuration}
 
@@ -291,12 +339,14 @@ architecture decisions, trade-off analysis, and reasoning.
 
 #### Pipeline State
 
-Create or update `{project-dir}/pipeline-state.json`:
+Create or update `{project-dir}/pipeline-state.json`. If `selected_phases` was already
+set by the Router, preserve it. Otherwise, default to all phases:
 
 ```json
 {
   "project_name": "{project-name}",
   "created_at": "{ISO timestamp}",
+  "selected_phases": ["brainstorm", "planning", "implementation", "code-review", "testing", "documentation"],
   "current_phase": "brainstorm",
   "phases": {
     "brainstorm": {
@@ -325,10 +375,18 @@ If yes, commit with a message like: `docs: add {topic} design spec`
 
 If no repo exists or user declines, move on — don't push it.
 
-**Handoff:** Suggest the next pipeline step:
-> "Your spec is ready! The next step is **Planning** — this will break down your spec
-> into a detailed implementation plan with tasks, file structure, and dependencies.
-> Want me to start the planning phase?"
+**Handoff:** Resolve the next phase using the Handoff Resolution algorithm from the
+Router skill: read `pipeline-state.json`, find the next phase in `selected_phases`
+after "brainstorm" (default: planning). Present:
+> "Your spec is ready! The next step is **{resolved_next_phase}**."
+If no more selected phases remain:
+> "Your spec is ready! That completes the selected pipeline scope."
+
+If the brainstorm involved extensive web research or long discussion, suggest a session split:
+> "If this conversation is getting long, you can start a new session and say 'continue'
+> — the spec and design doc are on disk, so the next phase will pick up cleanly."
+
+Otherwise, ask if the user wants to proceed to the resolved next phase.
 
 ---
 
@@ -338,7 +396,10 @@ If no repo exists or user declines, move on — don't push it.
 - **Multiple choice preferred** — Easier to answer than open-ended when possible
 - **YAGNI ruthlessly** — Actively remove unnecessary features from designs. Push back
   on scope creep. Help the user focus on what matters for v1.
-- **Explore alternatives** — Always propose 2-3 approaches before settling on one
+- **Diverge then converge** — Generate options without judgment first, then evaluate.
+  Premature convergence is the #1 brainstorm failure mode.
+- **Surface assumptions** — Every design has hidden assumptions. Make them explicit and
+  challenge the low-confidence ones before committing.
 - **Incremental validation** — Present design in 200-300 word sections, validate each
 - **Lead with recommendations** — When the user asks what you think, give a clear
   recommendation with reasoning, not "it depends"

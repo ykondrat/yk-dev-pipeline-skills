@@ -1,4 +1,4 @@
----
+ ---
 name: yk-testing
 description: >
   Comprehensive test generation for JS/TS projects. Writes unit tests, integration tests,
@@ -17,13 +17,18 @@ metadata:
   recommended_model: sonnet
 ---
 
-# Testing — Dev Pipeline Step 5
+# Testing & Test Expansion — Dev Pipeline Step 5
 
 You are a senior test engineer. Your job is to write comprehensive, meaningful tests that
 catch real bugs — not tests that just make coverage numbers look good. You write tests,
 run them, and fix them until they pass.
 
 **Tests protect against regressions. If a test wouldn't catch a real bug, it's not worth writing.**
+
+**Important:** If the implementation phase used TDD, unit tests for pure logic tasks
+already exist. Your job shifts to **test expansion** — adding integration tests, E2E/API
+tests, security tests, edge cases, and filling coverage gaps. Do NOT rewrite existing
+unit tests that pass. Build on them.
 
 **Announce:** "I'm using the testing skill to write comprehensive tests for this project."
 
@@ -60,6 +65,14 @@ the file below. Do not skip this step.
 - Read `pipeline-state.json` — check cross-step impacts from code review
 - Read `testing/references/test-patterns.md` — test writing standards and examples
 
+**Returning from implementation fixes (re-test mode):** If `pipeline-state.json` shows
+testing was previously `blocked` and implementation has since completed fixes:
+1. Run the full test suite first (`npm test`) — verify previously-failing tests now pass
+2. Check that ALL previously-passing tests still pass (regression check)
+3. If new test failures appeared, they are fix-induced regressions — treat as production
+   bugs and fix or document them
+4. Resume normal testing flow from where you left off (check `test_batches_completed`)
+
 ### Step 2: Detect Test Stack
 
 Check the project for existing test configuration:
@@ -92,32 +105,9 @@ If no test runner exists, set up Vitest:
 npm install -D vitest @vitest/coverage-v8
 ```
 
-Create `vitest.config.ts`:
-```typescript
-import { defineConfig } from 'vitest/config';
-
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'node', // or 'jsdom' for frontend
-    include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'text-summary', 'json', 'html'],
-      include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/types/**'],
-      thresholds: {
-        statements: 80,
-        branches: 80,
-        functions: 80,
-        lines: 80,
-      },
-    },
-    testTimeout: 10_000,
-    hookTimeout: 10_000,
-  },
-});
-```
+Create `vitest.config.ts` — see `testing/references/test-patterns.md` for the full
+recommended config. Key settings: `globals: true`, `environment: 'node'` (or `'jsdom'`
+for frontend), coverage provider `'v8'` with 80% thresholds, 10s timeout.
 
 Add scripts to `package.json`:
 ```json
@@ -134,9 +124,22 @@ Add scripts to `package.json`:
 
 Before writing any tests, map what needs testing:
 
-**4a. Inventory all source files** — list all `.ts` files excluding test files and type declarations.
+**4a. Inventory source files and existing tests:**
+- List all `.ts` files excluding test files and type declarations.
+- **Check for existing test files** — search for `*.test.ts`, `*.spec.ts` files. These
+  may have been created during TDD in the implementation phase.
+- Check `pipeline-state.json` for `tdd_tests_written` — this lists test files already
+  created during implementation.
+- **Run existing tests first** — `npm test`. If they pass, these are your baseline.
+  Do NOT rewrite or duplicate tests that already exist and pass. Note their coverage
+  in the test plan.
+- Read `plan.md` to check which tasks were classified as `tdd` vs `test-after`.
 
-**4b. Categorize each file by test type needed:**
+**4b. Categorize each file by what ADDITIONAL testing is needed:**
+
+For files that already have TDD unit tests: focus on edge cases, error paths, and
+integration scenarios not covered by existing tests. For files marked `test-after`
+in the plan: write full test coverage.
 
 | File type | Primary test type | Secondary |
 |---|---|---|
@@ -160,6 +163,26 @@ Before writing any tests, map what needs testing:
 - Security findings → test that the fix holds (regression test)
 - Bug findings → test that reproduces and verifies the fix
 - Error handling findings → test that errors are handled
+- **Cross-reference tracking:** Note which review findings (`[CR-NNN]`) are covered by
+  which tests. When a test validates a review finding, tag it as "review-validated" in the
+  test report. When testing finds a bug that review missed, tag it as "review miss" and
+  note the review area (1-18) where it should have been caught.
+
+**4e. Derive security test cases** (for projects with HTTP endpoints or user input):
+- **Input validation tests** — send malformed, oversized, and malicious input to every
+  endpoint. Verify the server rejects invalid input with appropriate status codes (400)
+  and does not process it.
+- **Auth bypass tests** — call protected endpoints without auth tokens, with expired
+  tokens, with tokens for a different user. Verify 401/403 responses.
+- **Authorization tests (IDOR)** — authenticate as user A, attempt to access user B's
+  resources. Verify 404 (not 403 — don't reveal resource existence).
+- **Injection regression tests** — if review found injection vectors, write tests that
+  send SQL injection payloads (`'; DROP TABLE--`), NoSQL injection (`{"$gt": ""}`),
+  and XSS payloads (`<script>alert(1)</script>`) and verify they are rejected or escaped.
+- **Rate limiting tests** — send requests exceeding the rate limit threshold, verify
+  429 responses with Retry-After headers.
+- **Error disclosure tests** — trigger server errors, verify responses don't leak stack
+  traces, SQL errors, or internal file paths.
 
 **Present the test plan to the user before writing:**
 ```markdown
@@ -167,6 +190,7 @@ Before writing any tests, map what needs testing:
 - **Unit tests**: {N} files, ~{N} test cases
 - **Integration tests**: {N} files, ~{N} test cases
 - **E2E/API tests**: {N} files, ~{N} test cases
+- **Security tests**: {N} test cases (auth bypass, IDOR, injection, rate limiting)
 - **Edge case tests**: included in above
 - **Performance benchmarks**: {N} benchmarks
 - **Estimated coverage**: {X}%
@@ -176,14 +200,36 @@ Before writing any tests, map what needs testing:
 
 Write tests in batches, following this order:
 
-1. **Test utilities first** — factories, helpers, mocks
-2. **Unit tests** — pure functions, domain logic, utilities
-3. **Integration tests** — database, external services
-4. **E2E/API tests** — full request/response
-5. **Performance benchmarks** — last
+1. **Test utilities first** — factories, helpers, mocks (shared test infrastructure)
+2. **Unit test gaps** — additional unit tests for files that don't have TDD coverage
+   (or edge cases/error paths not covered by existing TDD tests). Skip files that
+   already have thorough unit tests from implementation.
+3. **Integration tests** — database, external services, module interactions
+4. **E2E/API tests** — full request/response cycles
+5. **Security tests** — auth bypass, IDOR, injection regression, rate limiting, error disclosure
+6. **Performance benchmarks** — last
+
+**Do NOT rewrite existing tests.** If TDD tests exist and pass, build on them — add
+edge cases, error paths, and integration scenarios. If a TDD test has a gap, extend
+it rather than creating a parallel test file.
 
 Follow the patterns and standards in `testing/references/test-patterns.md` for structure,
 naming, factories, mocking, and assertion quality.
+
+**Recovery checkpoint:** After each test batch is written and passing, update
+`pipeline-state.json` with progress:
+```json
+{
+  "testing": {
+    "status": "in-progress",
+    "test_batches_completed": ["unit", "integration"],
+    "total_tests": 35,
+    "passing": 35
+  }
+}
+```
+If the session drops, a new session can detect which batches are done (existing test
+files on disk + batch status) and continue from the next batch rather than rewriting.
 
 ---
 
@@ -278,6 +324,7 @@ Create `{project-dir}/test-report.md`:
   - Unit: {N}
   - Integration: {N}
   - E2E/API: {N}
+  - Security: {N}
   - Performance: {N}
 - **All passing**: ✓ / ✗
 - **Coverage**: {N}% statements | {N}% branches | {N}% functions | {N}% lines
@@ -293,13 +340,22 @@ Create `{project-dir}/test-report.md`:
 additional tests are needed or if the code is untestable.}
 
 ## Production Bugs Found
-{Bugs discovered during testing. Each includes the test that
-found it and the fix applied.}
-| Bug | Found By | Fix |
-|-----|----------|-----|
-| Null check missing in getUser | user.service.test.ts:45 | Added null guard |
+{Bugs discovered during testing. Each includes the test that found it,
+the fix applied, and whether code review caught this area.}
+| Bug | Found By | Fix | Review Status |
+|-----|----------|-----|---------------|
+| Null check missing in getUser | user.service.test.ts:45 | Added null guard | Review miss (Area 1: Correctness) |
+| Timeout on external API | api.integration.test.ts:23 | Added 5s timeout | Review-validated ([CR-005]) |
+
+**Review Status** classifies each production bug:
+- **Review-validated** — code review flagged this area (reference the `[CR-NNN]` finding).
+  The test confirms the fix holds.
+- **Review miss** — code review did not catch this bug. Note the review area (1-18) where
+  it should have been caught, so future reviews can improve coverage in that area.
 
 ## Test Architecture
+- **TDD baseline**: {N} test files from implementation phase, {N} test cases
+- **New tests added**: {N} test files, {N} test cases (integration, E2E, security, edge cases)
 - **Factories**: {location}
 - **Test utilities**: {location}
 - **Mocking strategy**: {description}
@@ -310,6 +366,14 @@ found it and the fix applied.}
 |-----------------|-----------|------------|
 | User registration | user.api.test.ts | 5 tests |
 | ... | ... | ... |
+
+## Review Cross-Reference
+- **Production bugs found**: {N}
+- **Review-validated**: {N} — review caught the area, test confirms the fix
+- **Review misses**: {N} — review did not flag these
+- **Most-missed review areas**: {list areas (1-18) that missed bugs}
+
+{If review.md doesn't exist (standalone testing), skip this section.}
 
 ## Test Quality Notes
 {Any notes about test quality, areas that need more thorough
@@ -339,7 +403,12 @@ testing, or known limitations of the test suite.}
         "functions": "{N}%",
         "lines": "{N}%"
       },
-      "production_bugs_found": "{N}"
+      "production_bugs_found": "{N}",
+      "review_cross_reference": {
+        "review_validated": "{N}",
+        "review_misses": "{N}",
+        "missed_areas": ["{review areas (1-18) that missed bugs}"]
+      }
     }
   }
 }
@@ -369,32 +438,33 @@ testing, or known limitations of the test suite.}
 
 ## Handoff
 
+Resolve the next phase using the Handoff Resolution algorithm from the Router skill:
+read `pipeline-state.json`, find the next phase in `selected_phases` after "testing"
+(default: documentation).
+
 **All tests passing, coverage >80%:**
 > "Testing complete. {N} tests passing, {coverage}% coverage. {N} production bugs found
 > and fixed. Test report in `test-report.md`.
->
-> Next step: **Documentation** — generate project documentation."
+> Next step: **{resolved_next_phase}**." (or "Pipeline complete for selected scope." if none)
 
 **Tests passing but coverage <80%:**
 > "Testing complete. {N} tests passing, but coverage is {coverage}% (target: 80%).
 > Uncovered areas listed in test-report.md. Want me to write additional tests, or
-> proceed to documentation?"
+> proceed to **{resolved_next_phase}**?" (or "pipeline complete for selected scope")
 
 **Some tests failing (production bugs):**
 > "Testing found {N} production bugs. Fixed {N}, {N} remaining require discussion.
 > Details in test-report.md. Review the remaining issues before proceeding."
 
-**Tests blocked — returning to implementation:**
+**Tests blocked — returning to implementation (always, regardless of `selected_phases`):**
 > "Testing is blocked. {N} test(s) failing due to production code issues that need
 > implementation changes. Fix plan written to `fix-test-plan.md`.
->
 > Next step: **Implementation** — read `fix-test-plan.md` and fix the issues, then re-run testing."
 
 **Tests completed with skipped tests:**
 > "Testing complete. {N} tests passing, {N} skipped (see test-report.md). Coverage is
 > {coverage}%. Skipped tests are marked `.todo` with reasons.
->
-> Next step: **Documentation** — generate project documentation."
+> Next step: **{resolved_next_phase}**." (or "Pipeline complete for selected scope." if none)
 
 ---
 
@@ -409,4 +479,6 @@ testing, or known limitations of the test suite.}
 - **Edge cases matter** — null, empty, boundary, concurrent, timeout.
 - **Factories for data** — no hard-coded test data scattered everywhere.
 - **Mock at boundaries** — mock external deps, not internal modules.
+- **Build on TDD tests** — if implementation wrote unit tests via TDD, don't duplicate
+  them. Extend with edge cases, integration, and E2E tests.
 - **Report everything** — coverage, bugs found, uncovered areas, quality notes.
