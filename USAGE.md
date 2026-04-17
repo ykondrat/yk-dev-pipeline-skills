@@ -1,13 +1,14 @@
-# How to Use YK Dev Pipeline Skills
+# How to Use YK Dev Pipeline
 
-This guide shows you how to use the skills in different environments and scenarios.
+This guide shows you how to use the pipeline agents and skills in different environments.
 
 ## Table of Contents
-1. [Using in Claude Code (CLI)](#using-in-claude-code-cli)
-2. [Using in Claude.ai Projects](#using-in-claudeai-projects)
-3. [Using in Claude.ai Chat](#using-in-claudeai-chat)
-4. [Skill Invocation Methods](#skill-invocation-methods)
-5. [Common Workflows](#common-workflows)
+1. [Using in Claude Code (CLI) — Agent Mode (v3.0)](#using-in-claude-code-cli)
+2. [Using Agents Standalone](#using-agents-standalone)
+3. [Using in Claude.ai Projects](#using-in-claudeai-projects)
+4. [Using in Claude.ai Chat](#using-in-claudeai-chat)
+5. [Skill Invocation Methods](#skill-invocation-methods)
+6. [Common Workflows](#common-workflows)
 
 ---
 
@@ -37,12 +38,12 @@ To uninstall:
 
 After installation, Claude Code automatically detects the plugin skills. You can invoke them:
 
-#### Slash Command
+#### Slash Command (Skill-based — orchestrator)
 ```bash
 /yk-dev-pipeline
 ```
 
-This invokes the pipeline router, which guides you through all 6 phases. Individual phases (brainstorm, planning, etc.) are loaded on demand by the router — they are not separate slash commands.
+This invokes the pipeline orchestrator, which manages all 6 phases via independent agents. Individual phases run as agents in their own context windows — the orchestrator handles routing, state, and handoffs.
 
 #### Natural Language Trigger
 Just describe what you want — the Router detects your intent and routes to the correct phase:
@@ -66,6 +67,43 @@ Just describe what you want — the Router detects your intent and routes to the
 "Next step" / "Continue"
 → Router reads pipeline-state.json → routes to next incomplete phase (respects selected_phases)
 ```
+
+---
+
+## Using Agents Standalone
+
+Each pipeline agent can be used independently without the full pipeline:
+
+### Via @-mention
+Type `@` in Claude Code and select from the agent list:
+```
+@brainstorm — Run a brainstorming session for a new feature
+@investigation — Investigate a bug or performance issue
+@planning — Break a spec into tasks
+@implementation — Execute a plan
+@code-review — Review code (read-only, 18 areas)
+@testing — Write comprehensive tests
+@documentation — Generate project docs
+```
+
+### Via CLI flag
+```bash
+claude --agent yk-dev-pipeline:brainstorm
+claude --agent yk-dev-pipeline:code-review
+claude --agent yk-dev-pipeline:testing
+```
+
+### Parallel Code Review
+The orchestrator automatically runs 3 code-review agents in parallel:
+- **Security focus** — Areas 2, 12, 15, 16, 17
+- **Quality focus** — Areas 1, 3, 4, 5, 6, 7, 8
+- **Compliance focus** — Areas 9, 10, 11, 13, 14, 18
+
+Results are consolidated into a unified `review.md` with deduplicated findings.
+
+### Agent vs Skill Mode
+- **Agents (v3.0)**: Each phase runs in isolated context with scoped tools. Default in Claude Code.
+- **Skills (v2.0)**: Phases run in main conversation context. Used as fallback or in Claude.ai.
 
 ---
 

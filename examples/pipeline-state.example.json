@@ -1,6 +1,9 @@
 {
   "project_name": "url-shortener-api",
   "created_at": "2026-02-11T10:00:00Z",
+  "version": "3.0",
+  "orchestration_mode": "agents",
+  "parallel_review": true,
   "selected_phases": ["brainstorm", "planning", "implementation", "code-review", "testing", "documentation"],
   "current_phase": "testing",
   "phases": {
@@ -89,6 +92,11 @@
         "branches": "68%",
         "functions": "82%",
         "lines": "75%"
+      },
+      "quality_metrics": {
+        "assertion_density": "2.8",
+        "mutation_score": "65%",
+        "property_tests": 4
       }
     },
     "documentation": {

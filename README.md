@@ -2,9 +2,9 @@
   <img src="https://avatars.githubusercontent.com/u/25372917?s=400&u=cb65675c0d91605c69be4e24dd2f5043b01125cc&v=4" width="120" height="120" style="border-radius: 50%;" alt="Yevhen Kondratyev" />
 </p>
 
-# 🏗️ Dev Pipeline Skills for Claude
+# 🏗️ Dev Pipeline for Claude — v3.0 (Agent-Based)
 
-A comprehensive 6-phase development pipeline that turns Claude into a senior engineering team. From idea to production-ready, tested, documented code — using structured AI skills.
+A comprehensive 6-phase development pipeline that turns Claude into a senior engineering team. From idea to production-ready, tested, documented code — using **independent agents** with isolated context, scoped tools, and per-phase model selection.
 
 ```
 Brainstorm/Investigation → Planning → Implementation → Code Review → Testing → Documentation
@@ -12,20 +12,30 @@ Brainstorm/Investigation → Planning → Implementation → Code Review → Tes
 
 ## What Is This?
 
-A collection of **Claude AI skills** (structured instruction files) that guide Claude through a complete software development lifecycle for JavaScript/TypeScript projects. Each skill contains detailed processes, checklists, best practices, and reference materials that Claude reads and follows.
+A collection of **Claude Code agents** (structured markdown files with YAML frontmatter) that guide Claude through a complete software development lifecycle for JavaScript/TypeScript projects. Each agent runs in its **own context window** with scoped tools, dedicated model, and self-verification gates.
 
-**Think of it as a senior engineering team's playbook, optimized for AI.**
+**Think of it as a senior engineering team, where each team member has their own expertise and tools.**
+
+## What's New in v3.0
+
+- **Independent agents** — Each phase runs in its own context window (no cross-phase pollution)
+- **Scoped tools** — Code review is read-only, investigation can't edit source
+- **Per-phase models** — Opus for complex phases (brainstorm, implementation, review), Sonnet for structured phases
+- **Parallel code review** — 3 agents review simultaneously (security, quality, compliance)
+- **Self-verification gates** — Every agent validates its output before completing
+- **Research-backed improvements** — Mutation testing, property-based tests, hypothesis-evidence matrix, ADR automation, and more
+- **Backward compatible** — Original skills still work alongside agents
 
 ## Features
 
-- 🎛️ **Phase Selection** — Choose which phases to run: full pipeline, quick build, review & polish, or custom selection
-- 🧠 **Brainstorm** — Deep-dive requirements gathering with conversational questioning
-- 🔎 **Investigation** — Systematic debugging, root cause analysis, refactoring assessment, performance investigation
-- 📋 **Planning** — Task breakdown with dependencies, acceptance criteria, file structure, and archived plans in `docs/plans/`
-- ⚡ **Implementation** — Batch execution with quality gates, tech stack detection, and self-review
-- 🔍 **Code Review** — 18-area strict review with 4-level severity and actionable fix plans
-- 🧪 **Testing** — 5 test types, >80% coverage target, auto-detect runner, generate-run-fix loop, failure recovery (skip or loop back to implementation)
-- 📝 **Documentation** — 7 doc types generated from actual code (README, API, architecture, deployment, etc.)
+- 🎛️ **Phase Selection** — Full pipeline, quick build, review & polish, or custom selection
+- 🧠 **Brainstorm** (opus, blue) — Requirements via questioning + constraint exploration, multi-perspective analysis, completeness scoring
+- 🔎 **Investigation** (opus, purple) — Root cause analysis + git bisect, hypothesis-evidence matrix, evidence thresholds
+- 📋 **Planning** (sonnet, green) — Task breakdown + DAG dependency analysis, solvability verification, error propagation
+- ⚡ **Implementation** (opus, orange) — Strict incremental execution + scaffolding-first, per-task self-verification
+- 🔍 **Code Review** (opus, red) — 18-area review + parallel agents, confidence scoring, trajectory analysis, counterfactual analysis
+- 🧪 **Testing** (sonnet, yellow) — Test generation + mutation testing, property-based tests, multi-metric quality assessment
+- 📝 **Documentation** (sonnet, cyan) — Doc generation + ADR automation, living documentation, command verification
 
 ### Bonus: Reference Materials
 

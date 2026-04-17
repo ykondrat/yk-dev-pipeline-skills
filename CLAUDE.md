@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **not a traditional software project** — it contains no executable code, no dependencies, and no build system. It is a collection of Claude AI skills (structured markdown instruction files) that guide Claude through a 6-phase JS/TS development lifecycle:
+This is **not a traditional software project** — it contains no executable code, no dependencies, and no build system. It is a collection of Claude AI **agents and skills** (structured markdown instruction files) that guide Claude through a 6-phase JS/TS development lifecycle:
 
 ```
 Brainstorm/Investigation → Planning → Implementation → Code Review → Testing → Documentation
 ```
 
-Each phase has a dedicated SKILL.md with detailed processes, and produces artifacts (spec.md, plan.md, etc.) consumed by the next phase.
+**v3.0 Architecture:** Each phase is an independent **agent** running in its own context window with scoped tools and model selection. The orchestrator skill manages routing, state, and handoffs. Original skills are kept for backward compatibility.
 
 ## Repository Structure
 
@@ -18,28 +18,42 @@ This repo is structured as a **Claude Code plugin marketplace** with one plugin:
 
 - `.claude-plugin/marketplace.json` — **Marketplace catalog** (`owner`, `plugins` with `source` paths). Validated by Claude Code on `/plugin marketplace add`.
 - `plugins/yk-dev-pipeline/` — **Plugin directory** containing the dev pipeline.
-  - `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` — Minimal plugin manifest (`name`, `version`, `description`, `author`). Skills are auto-discovered from the `skills/` directory.
-  - `plugins/yk-dev-pipeline/skills/SKILL.md` — **Router/entry point**. Single entry point for all general requests. Contains Phase Selection Menu (4 presets + custom), Intent Detection Rules (6 rules, 0-5, for classifying user requests — Rule 0 extracts `selected_phases` from natural language), Continuation Logic (state-to-next-action routing table with `selected_phases` awareness), and Handoff Resolution algorithm (centralized next-phase resolution used by all phase skills). Manages `pipeline-state.json`.
-  - `plugins/yk-dev-pipeline/skills/{phase}/SKILL.md` — Phase-specific instructions (brainstorm, investigation, planning, implementation, code-review, testing, documentation).
-  - `plugins/yk-dev-pipeline/skills/investigation/references/` — Investigation patterns: debugging strategies, root cause categories, refactoring analysis, performance investigation, evidence documentation.
-  - `plugins/yk-dev-pipeline/skills/brainstorm/references/` — Creativity techniques: pre-mortem, inversion, stakeholder role-play, assumption surfacing, diverge-converge process, technique selection matrix.
-  - `plugins/yk-dev-pipeline/skills/implementation/references/` — Deep reference materials: JS/TS best practices, Clean Code principles, security patterns, implementation standards (commit message format, finding outcome tracking, self-review checklist, scaffolding, code style defaults), SQL/NoSQL/Redis database patterns, web framework patterns (Express/Fastify/Hono/Next.js), frontend framework patterns (React/Next.js/Vue 3).
-  - `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md` — All 18 review area checklists with severity guidance.
-  - `plugins/yk-dev-pipeline/skills/testing/references/test-patterns.md` — Vitest reference, test writing patterns, factories, mocking, assertions, frontend testing, anti-patterns.
-  - `plugins/yk-dev-pipeline/skills/documentation/references/doc-templates.md` — Templates for all 7 doc types (README, API, architecture, etc.).
+  - `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` — Plugin manifest (`name`, `version`, `description`, `author`). Agents and skills are auto-discovered from their directories.
+  - **`plugins/yk-dev-pipeline/agents/`** — **Independent phase agents** (v3.0). Each agent runs in its own context window with scoped tools:
+    - `brainstorm.md` — Opus, full tools + web research, blue
+    - `investigation.md` — Opus, no Edit (investigate-only), purple
+    - `planning.md` — Sonnet, Read/Write/Edit, green
+    - `implementation.md` — Opus, full tools, maxTurns 100, orange
+    - `code-review.md` — Opus, no Edit (read-only review), red
+    - `testing.md` — Sonnet, full tools, maxTurns 80, yellow
+    - `documentation.md` — Sonnet, Read/Write/Edit, cyan
+  - **`plugins/yk-dev-pipeline/references/`** — **Shared reference library** (v3.0). Used by agents via Read tool:
+    - `references/brainstorm/creativity-techniques.md`
+    - `references/investigation/investigation-patterns.md`
+    - `references/implementation/` — 9 files (clean-code, js-ts, standards, security, databases, frameworks)
+    - `references/code-review/review-checklists.md`
+    - `references/testing/test-patterns.md`
+    - `references/documentation/doc-templates.md`
+  - `plugins/yk-dev-pipeline/skills/SKILL.md` — **Orchestrator** (v3.0). Manages intent detection, phase selection, agent invocation, parallel code review, state management, handoff resolution. Falls back to skill-based approach if agents unavailable.
+  - `plugins/yk-dev-pipeline/skills/{phase}/SKILL.md` — **Phase skills** (v2.0, kept for backward compatibility). Original skill-based instructions for each phase.
+  - `plugins/yk-dev-pipeline/skills/{phase}/references/` — **Skill reference files** (kept for backward compatibility with skill-based approach).
 - `examples/` — Example artifacts: `pipeline-state.example.json`, `pipeline-state-investigation.example.json`, `plan.example.md`, `review.example.md`, `fix-plan.example.md`, `fix-test-plan.example.md`, `test-report.example.md`.
-- `TESTING.md` — **Skill testing guide**: test prompts per skill, output quality criteria (checklists for each skill's output), before/after comparison methodology, model matrix, regression markers for targeted verification after changes.
+- `TESTING.md` — **Testing guide**: test prompts per agent/skill, output quality criteria, regression markers.
 
 ## No Build/Test/Lint Commands
 
-There are no package.json, build tools, or test runners. "Testing" a skill means running
+There are no package.json, build tools, or test runners. "Testing" an agent means running
 it in a real Claude conversation and verifying Claude follows the instructions correctly.
-See `TESTING.md` for the full testing guide: test prompts per skill, output quality
-criteria, before/after comparison methodology, model matrix, and regression markers.
+See `TESTING.md` for the full testing guide.
 
-## Skill File Format
+## File Formats
 
-Every SKILL.md uses:
+**Agent files** (`agents/*.md`) use:
+1. YAML frontmatter (`name`, `description`, `model`, `tools`, `effort`, `maxTurns`, `memory`, `color`)
+2. Markdown body as the agent's system prompt
+3. Process steps, reference loading instructions, self-verification gates
+
+**Skill files** (`skills/*/SKILL.md`) use:
 1. YAML frontmatter (`name`, `description`)
 2. Markdown with clear hierarchical sections
 3. Code examples in fenced blocks with language tags
@@ -47,32 +61,41 @@ Every SKILL.md uses:
 
 ## Key Conventions
 
-- **SKILL.md files stay under ~500 lines** — deep content goes in `references/` subdirectories
-- **Reference files are loaded on demand** — skills tell Claude when to read them
-- **Artifact chaining** — each phase produces files the next phase reads (spec.md → plan.md → code → review.md → test-report.md → docs). Design docs, investigation reports, and plans are also archived in `docs/plans/` with date prefixes (e.g., `YYYY-MM-DD-{topic}-design.md`, `YYYY-MM-DD-{topic}-investigation.md`, `YYYY-MM-DD-{topic}-plan.md`)
-- **Fix plan files** — code review produces `fix-plan.md`, testing produces `fix-test-plan.md` when blocked. The implementation skill reads all three: `plan.md`, `fix-plan.md`, `fix-test-plan.md`
-- **Failure recovery loops** — code review can block and loop back to implementation; testing can block (status `"blocked"`) and loop back to implementation, or skip failing tests (marked `.todo`) — user decides via `AskUserQuestion`
-- **Pipeline state** tracked in `pipeline-state.json` at the project root (statuses: `pending`, `in-progress`, `completed`, `blocked`). Includes `selected_phases` array — if absent, all phases are selected (backward compatible). Handoff Resolution algorithm in Router determines next phase dynamically based on this array.
-- **Review severity levels**: 🔴 Critical, 🟡 Major, 🔵 Minor, ⚪ Nitpick. Debatable findings are tagged `[DEBATABLE]` (not a separate severity level)
-- **Router-first routing** — The Router SKILL.md is the single entry point for all general requests. Phases 1a-3 have narrowed triggers (explicit phase-name mentions only); Phases 4-6 retain broad standalone triggers. "next step" / "continue" are exclusively Router-handled via the Continuation Logic table.
+- **Agents run in isolated context** — each phase agent has its own context window, scoped tools, and model
+- **Parallel code review** — orchestrator invokes 3 code-review agents simultaneously (security, quality, compliance)
+- **Shared reference library** — `references/` directory at plugin root, loaded on demand by agents via Read/Glob
+- **Artifact chaining** — each phase produces files the next reads (spec.md → plan.md → code → review.md → test-report.md → docs)
+- **Fix plan files** — code review produces `fix-plan.md`, testing produces `fix-test-plan.md`
+- **Failure recovery loops** — code review/testing can block → implementation → re-review/re-test
+- **Pipeline state** tracked in `pipeline-state.json` (v3.0 adds `version`, `orchestration_mode`, `agent_results`)
+- **Review severity levels**: 🔴 Critical, 🟡 Major, 🔵 Minor, ⚪ Nitpick
+- **Self-verification gates** — every agent verifies its own output before completing
+- **Per-agent improvements** — brainstorm: constraint exploration, multi-perspective; investigation: git bisect, hypothesis matrix; planning: task DAG, solvability; implementation: incremental execution, scaffolding-first; code-review: confidence scoring, trajectory analysis; testing: mutation testing, property-based; documentation: ADR automation, living docs
 
-## Editing Skills
+## Editing Agents
+
+When modifying agents, preserve:
+- The YAML frontmatter with all required fields (name, description, model, tools, effort, maxTurns, memory, color)
+- Tool scoping (code-review has no Edit, investigation has no Edit)
+- The self-verification gate at the end
+- Reference loading instructions (Glob pattern + Read)
+- The artifact production and pipeline-state.json updates
+
+## Editing Skills (Backward Compatibility)
 
 When modifying skills, preserve:
 - The YAML frontmatter format
-- The progressive loading pattern (skills reference other files, not inline everything)
+- The progressive loading pattern
 - The artifact chaining between phases
-- Severity emoji conventions in review-related files
-- The "suggest next phase, wait for user confirmation" interaction pattern
+- Severity emoji conventions
+- The "suggest next phase, wait for confirmation" interaction pattern
 
-**After modifying a skill, consult `TESTING.md`:**
-1. Run at least one test prompt for the changed skill
-2. Check the output quality criteria for that skill
-3. Use regression markers to identify what else to verify
-4. For significant changes, do a before/after comparison
+**After modifying an agent or skill, consult `TESTING.md`.**
 
 ## Adding New Content
 
-- **New reference materials** go in the appropriate `references/` directory, following the structure of existing references (rationale + examples + severity tables)
-- **New review checklist areas** go in `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md` with standard severity emoji levels
-- **Parent SKILL.md must be updated** to reference any new files
+- **New agents** go in `plugins/yk-dev-pipeline/agents/` with full frontmatter
+- **New reference materials** go in `plugins/yk-dev-pipeline/references/{phase}/`
+- **New review checklist areas** go in `references/code-review/review-checklists.md`
+- **Orchestrator SKILL.md must be updated** to reference any new agents or phases
+- **Keep skill references in sync** — if adding references to `references/`, also add to `skills/{phase}/references/` for backward compatibility

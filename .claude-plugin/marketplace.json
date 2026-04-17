@@ -6,16 +6,16 @@
   },
   "metadata": {
     "description": "Complete 6-phase JS/TS development pipeline for Claude Code — from brainstorm (or investigation) to production-ready, tested, documented code.",
-    "version": "2.0.0"
+    "version": "3.0.0"
   },
   "plugins": [
     {
       "name": "yk-dev-pipeline",
       "source": "./plugins/yk-dev-pipeline",
-      "description": "6-phase JS/TS development pipeline: brainstorm/investigation, planning, implementation, code review, testing, documentation",
-      "version": "2.0.0",
+      "description": "Agent-based 6-phase JS/TS development pipeline with independent agents for each phase, parallel code review, and scoped tools. Skills kept for backward compatibility.",
+      "version": "3.0.0",
       "category": "development",
-      "tags": ["typescript", "javascript", "code-review", "testing", "documentation", "pipeline", "investigation", "debugging"]
+      "tags": ["typescript", "javascript", "code-review", "testing", "documentation", "pipeline", "investigation", "debugging", "agents", "parallel-review"]
     }
   ]
 }

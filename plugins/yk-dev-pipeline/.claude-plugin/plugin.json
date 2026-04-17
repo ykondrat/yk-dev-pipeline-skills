@@ -1,7 +1,7 @@
 {
   "name": "yk-dev-pipeline",
-  "version": "2.0.0",
-  "description": "Complete 6-phase JS/TS development pipeline: brainstorm/investigation, planning, implementation, code review, testing, and documentation. Investigation is an alternative Phase 1 for bug fixes, refactoring, and performance issues. Each phase produces artifacts consumed by the next.",
+  "version": "3.0.0",
+  "description": "Agent-based 6-phase JS/TS development pipeline with independent agents for brainstorm, investigation, planning, implementation, code review, testing, and documentation. Each agent runs in its own context window with scoped tools and model selection. Supports parallel code review. Skills kept for backward compatibility.",
   "author": {
     "name": "Yevhen Kondratyev"
   }
