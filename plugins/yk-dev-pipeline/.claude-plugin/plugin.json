@@ -1,8 +1,0 @@
-{
-  "name": "yk-dev-pipeline",
-  "version": "3.0.0",
-  "description": "Agent-based 6-phase JS/TS development pipeline with independent agents for brainstorm, investigation, planning, implementation, code review, testing, and documentation. Each agent runs in its own context window with scoped tools and model selection. Supports parallel code review. Skills kept for backward compatibility.",
-  "author": {
-    "name": "Yevhen Kondratyev"
-  }
-}

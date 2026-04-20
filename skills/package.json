@@ -1,0 +1,99 @@
+{
+  "name": "ai-tools",
+  "version": "3.1.0",
+  "description": "6-phase JS/TS development pipeline for Claude Code - from brainstorm (or investigation) to documentation. Agent-first with skill fallback, schema-validated state, slash commands.",
+  "keywords": [
+    "claude-skill",
+    "claude-code",
+    "anthropic",
+    "agent-skills",
+    "typescript",
+    "javascript",
+    "development-pipeline",
+    "code-review",
+    "testing",
+    "documentation"
+  ],
+  "author": "Yevhen Kondratyev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ykondrat/ai-tools.git"
+  },
+  "skills": [
+    {
+      "name": "yk-dev-pipeline",
+      "path": "SKILL.md",
+      "description": "Main entry point — auto-routes to agent-orchestrator when agents are available, falls back to skill-based pipeline otherwise",
+      "phase": "all"
+    },
+    {
+      "name": "yk-agent-orchestrator",
+      "path": "agent-orchestrator/SKILL.md",
+      "description": "Agent-first orchestrator (v3.0) — invokes phase agents via Task, runs parallel code review",
+      "phase": "all"
+    },
+    {
+      "name": "yk-brainstorm",
+      "path": "brainstorm/SKILL.md",
+      "description": "Deep-dive requirements gathering (direct: 'brainstorm phase')",
+      "phase": 1
+    },
+    {
+      "name": "yk-investigation",
+      "path": "investigation/SKILL.md",
+      "description": "Systematic investigation for bugs and refactoring (direct: 'investigation phase')",
+      "phase": "1b",
+      "references": [
+        "../references/investigation/investigation-patterns.md"
+      ]
+    },
+    {
+      "name": "yk-planning",
+      "path": "planning/SKILL.md",
+      "description": "Task breakdown and architecture planning (direct: 'planning phase')",
+      "phase": 2
+    },
+    {
+      "name": "yk-implementation",
+      "path": "implementation/SKILL.md",
+      "description": "Code execution with quality gates (direct: 'implementation phase')",
+      "phase": 3,
+      "references": [
+        "../references/implementation/js-ts-best-practices.md",
+        "../references/implementation/databases-sql.md",
+        "../references/implementation/databases-nosql.md",
+        "../references/implementation/databases-redis.md",
+        "../references/implementation/frameworks-web.md",
+        "../references/implementation/frameworks-frontend.md"
+      ]
+    },
+    {
+      "name": "yk-code-review",
+      "path": "code-review/SKILL.md",
+      "description": "18-area comprehensive code review — works standalone",
+      "phase": 4,
+      "references": [
+        "../references/code-review/review-checklists.md"
+      ]
+    },
+    {
+      "name": "yk-testing",
+      "path": "testing/SKILL.md",
+      "description": "Comprehensive test generation — works standalone",
+      "phase": 5,
+      "references": [
+        "../references/testing/test-patterns.md"
+      ]
+    },
+    {
+      "name": "yk-documentation",
+      "path": "documentation/SKILL.md",
+      "description": "Full project documentation generation — works standalone",
+      "phase": 6,
+      "references": [
+        "../references/documentation/doc-templates.md"
+      ]
+    }
+  ]
+}

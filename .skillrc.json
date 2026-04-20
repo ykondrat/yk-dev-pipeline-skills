@@ -1,89 +1,95 @@
 {
   "$schema": "https://agentskills.io/schema.json",
-  "name": "yk-dev-pipeline-skills",
-  "version": "2.0.0",
-  "description": "Complete 6-phase JS/TS development pipeline for Claude Code",
+  "name": "ai-tools",
+  "version": "3.1.0",
+  "description": "Complete 6-phase JS/TS development pipeline for Claude Code — agent-first with skill fallback, schema-validated state, slash commands",
   "author": "Yevhen Kondratyev",
   "license": "MIT",
-  "repository": "https://github.com/ykondrat/yk-dev-pipeline-skills",
+  "repository": "https://github.com/ykondrat/ai-tools",
   "compatibility": {
     "claude-code": ">=1.0.0",
     "platforms": ["darwin", "linux", "win32"]
   },
   "skills": {
     "yk-dev-pipeline": {
-      "entry": "plugins/yk-dev-pipeline/skills/SKILL.md",
-      "description": "Full 6-phase JS/TS development pipeline — handles ALL development requests: new features, bug fixes, refactoring, debugging, performance optimization, tech debt. Routes to the correct phase. Use for any general development request, 'next step', 'continue', status checks, or when the user describes what to build/fix without naming a specific phase.",
+      "entry": "skills/SKILL.md",
+      "description": "Main entry for the 6-phase JS/TS development pipeline. Auto-detects agent availability: hands off to yk-agent-orchestrator when agents are available, runs skill-based pipeline in-place otherwise. Use for ALL development requests: new features, bug fixes, refactoring, debugging, performance, tech debt, 'next step', 'continue', status checks.",
+      "type": "router",
+      "model": "sonnet"
+    },
+    "yk-agent-orchestrator": {
+      "entry": "skills/agent-orchestrator/SKILL.md",
+      "description": "Agent-first orchestrator (v3.0) — invokes the 7 phase agents via the Task tool, coordinates parallel code review, manages schema-validated pipeline-state.json. Use when the plugin is installed and agents are available. yk-dev-pipeline will hand off to this automatically; invoke directly only when forcing agent mode.",
       "type": "router",
       "model": "sonnet"
     },
     "yk-brainstorm": {
-      "entry": "plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md",
+      "entry": "skills/brainstorm/SKILL.md",
       "description": "Phase 1a: Deep-dive brainstorming for new features/projects. Use ONLY when user explicitly says 'brainstorm' or 'brainstorm phase'. For general 'build me...' or 'new feature' requests, use the yk-dev-pipeline router instead.",
       "type": "phase",
       "model": "opus",
       "phase": 1
     },
     "yk-investigation": {
-      "entry": "plugins/yk-dev-pipeline/skills/investigation/SKILL.md",
+      "entry": "skills/investigation/SKILL.md",
       "description": "Phase 1b: Systematic investigation for bugs and refactoring. Use ONLY when user explicitly says 'investigation phase' or 'investigate this'. For general 'fix this bug' or 'debug this' requests, use the yk-dev-pipeline router instead.",
       "type": "phase",
       "model": "opus",
       "phase": "1b",
       "references": [
-        "plugins/yk-dev-pipeline/skills/investigation/references/investigation-patterns.md"
+        "references/investigation/investigation-patterns.md"
       ]
     },
     "yk-planning": {
-      "entry": "plugins/yk-dev-pipeline/skills/planning/SKILL.md",
+      "entry": "skills/planning/SKILL.md",
       "description": "Phase 2: Task breakdown and architecture planning. Use ONLY when user explicitly says 'planning phase' AND spec.md exists. For general 'plan this' or 'help me plan' requests, use the yk-dev-pipeline router instead.",
       "type": "phase",
       "model": "sonnet",
       "phase": 2
     },
     "yk-implementation": {
-      "entry": "plugins/yk-dev-pipeline/skills/implementation/SKILL.md",
+      "entry": "skills/implementation/SKILL.md",
       "description": "Phase 3: Execute plan task by task with quality gates. Use ONLY when user explicitly says 'implementation phase' AND plan.md exists. For general 'build it' or 'start coding' requests, use the yk-dev-pipeline router instead.",
       "type": "phase",
       "model": "opus",
       "phase": 3,
       "references": [
-        "plugins/yk-dev-pipeline/skills/implementation/references/js-ts-best-practices.md",
-        "plugins/yk-dev-pipeline/skills/implementation/references/databases-sql.md",
-        "plugins/yk-dev-pipeline/skills/implementation/references/databases-nosql.md",
-        "plugins/yk-dev-pipeline/skills/implementation/references/databases-redis.md",
-        "plugins/yk-dev-pipeline/skills/implementation/references/frameworks-web.md",
-        "plugins/yk-dev-pipeline/skills/implementation/references/frameworks-frontend.md"
+        "references/implementation/js-ts-best-practices.md",
+        "references/implementation/databases-sql.md",
+        "references/implementation/databases-nosql.md",
+        "references/implementation/databases-redis.md",
+        "references/implementation/frameworks-web.md",
+        "references/implementation/frameworks-frontend.md"
       ]
     },
     "yk-code-review": {
-      "entry": "plugins/yk-dev-pipeline/skills/code-review/SKILL.md",
+      "entry": "skills/code-review/SKILL.md",
       "description": "Phase 4: Comprehensive 18-area code review. Use when user says 'code review', 'review this code', 'review my code', or 'check my code'. Works standalone on any codebase.",
       "type": "phase",
       "model": "opus",
       "phase": 4,
       "references": [
-        "plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md"
+        "references/code-review/review-checklists.md"
       ]
     },
     "yk-testing": {
-      "entry": "plugins/yk-dev-pipeline/skills/testing/SKILL.md",
+      "entry": "skills/testing/SKILL.md",
       "description": "Phase 5: Comprehensive test generation (unit, integration, e2e). Use when user says 'write tests', 'add tests', or 'testing phase'. Works standalone on any codebase.",
       "type": "phase",
       "model": "sonnet",
       "phase": 5,
       "references": [
-        "plugins/yk-dev-pipeline/skills/testing/references/test-patterns.md"
+        "references/testing/test-patterns.md"
       ]
     },
     "yk-documentation": {
-      "entry": "plugins/yk-dev-pipeline/skills/documentation/SKILL.md",
+      "entry": "skills/documentation/SKILL.md",
       "description": "Phase 6: Full project documentation generation. Use when user says 'write docs', 'generate docs', or 'documentation phase'. Works standalone on any codebase.",
       "type": "phase",
       "model": "sonnet",
       "phase": 6,
       "references": [
-        "plugins/yk-dev-pipeline/skills/documentation/references/doc-templates.md"
+        "references/documentation/doc-templates.md"
       ]
     }
   },

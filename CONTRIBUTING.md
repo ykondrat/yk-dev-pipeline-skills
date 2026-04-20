@@ -29,8 +29,8 @@ To add a reference:
 
 ### Adding New Review Checklist Areas
 
-1. Add the checklist to `plugins/yk-dev-pipeline/skills/code-review/references/review-checklists.md`
-2. Add a summary entry in `plugins/yk-dev-pipeline/skills/code-review/SKILL.md` under Review Areas
+1. Add the checklist to `references/code-review/review-checklists.md` (shared reference library)
+2. Add a summary entry in `skills/code-review/SKILL.md` under Review Areas
 3. Include severity guidance with the standard emoji levels (🔴🟡🔵⚪)
 
 ### Reporting Issues
@@ -87,16 +87,16 @@ This project follows [Semantic Versioning](https://semver.org/):
 When making changes, update the version in **all four locations**:
 
 1. `.claude-plugin/marketplace.json` → `metadata.version` and `plugins[0].version`
-2. `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` → `version`
+2. `.claude-plugin/plugin.json` → `version`
 3. `.skillrc.json` → `version`
-4. `plugins/yk-dev-pipeline/skills/package.json` → `version`
+4. `skills/package.json` → `version`
 
 ### For Users: Updating Installed Plugins
 
 Users who installed via the Claude Code marketplace can update by re-running:
 
 ```bash
-claude /plugin marketplace add yk-dev-pipeline
+claude /plugin marketplace add ai-tools
 ```
 
 This pulls the latest version from the repository.

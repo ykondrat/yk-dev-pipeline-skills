@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ykondrat/ai-tools/pipeline-state.schema.json",
+  "title": "Pipeline State",
+  "description": "Canonical schema for pipeline-state.json. Every agent and orchestrator must produce state that validates against this schema.",
+  "type": "object",
+  "required": ["project_name", "created_at", "version", "current_phase", "phases"],
+  "additionalProperties": false,
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short identifier for the project."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when the pipeline was created."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+      "description": "Schema version. Current: 3.0."
+    },
+    "orchestration_mode": {
+      "type": "string",
+      "enum": ["agents", "skills"],
+      "description": "Which orchestrator produced this state. `agents` = v3.0 agent-orchestrator. `skills` = v2.0 skill-orchestrator (fallback)."
+    },
+    "parallel_review": {
+      "type": "boolean",
+      "description": "Whether code review was/should be run as three parallel focus agents (security/quality/compliance) rather than a single full review. Orchestrator hint."
+    },
+    "selected_phases": {
+      "type": "array",
+      "items": {
+        "enum": ["brainstorm", "investigation", "planning", "implementation", "code-review", "testing", "documentation"]
+      },
+      "uniqueItems": true,
+      "description": "Phases the user chose to run. Phases not in this list are skipped during continuation. If absent, all phases are selected."
+    },
+    "current_phase": {
+      "enum": ["brainstorm", "investigation", "planning", "implementation", "code-review", "testing", "documentation", "complete"],
+      "description": "Phase the pipeline is currently at or most recently touched."
+    },
+    "phases": {
+      "type": "object",
+      "description": "Per-phase state. Keys: brainstorm XOR investigation (never both), planning, implementation, code-review, testing, documentation.",
+      "additionalProperties": false,
+      "properties": {
+        "brainstorm": { "$ref": "#/definitions/phaseState" },
+        "investigation": { "$ref": "#/definitions/phaseState" },
+        "planning": { "$ref": "#/definitions/phaseState" },
+        "implementation": { "$ref": "#/definitions/phaseState" },
+        "code-review": { "$ref": "#/definitions/phaseState" },
+        "testing": { "$ref": "#/definitions/phaseState" },
+        "documentation": { "$ref": "#/definitions/phaseState" }
+      },
+      "not": {
+        "required": ["brainstorm", "investigation"],
+        "description": "brainstorm and investigation are mutually exclusive."
+      }
+    }
+  },
+  "definitions": {
+    "phaseState": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": true,
+      "properties": {
+        "status": {
+          "enum": ["pending", "in-progress", "completed", "blocked"],
+          "description": "Lifecycle status of this phase. `blocked` only applies to code-review and testing — triggers a fix loop back to implementation."
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Artifact paths produced by this phase (relative to project root)."
+        },
+        "verdict": {
+          "enum": ["🛑 Block", "⚠️ Request Changes", "✅ Approve", "✅ Approve+"],
+          "description": "Code-review only. Maps to status as follows: 🛑 Block / ⚠️ Request Changes → status: blocked. ✅ Approve / ✅ Approve+ → status: completed."
+        },
+        "findings_counts": {
+          "type": "object",
+          "description": "Code-review only.",
+          "properties": {
+            "critical": { "type": "integer", "minimum": 0 },
+            "major": { "type": "integer", "minimum": 0 },
+            "minor": { "type": "integer", "minimum": 0 },
+            "nitpick": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "doc_impacts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Code-review only. Changes that require documentation updates."
+        },
+        "review_statistics": {
+          "type": "object",
+          "description": "Code-review re-review only. Acceptance rate, modified/dismissed counts."
+        },
+        "task_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Planning only."
+        },
+        "phase_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Planning only. Number of phases in the plan."
+        },
+        "last_completed_task": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Implementation only. Index of last task completed (for resume)."
+        },
+        "current_task": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Implementation only. Index of task currently in progress (for resume)."
+        },
+        "completed_tasks": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "Implementation only. Ordered list of completed task indices."
+        },
+        "tech_stack": {
+          "type": "object",
+          "description": "Implementation only. Detected or chosen tech stack.",
+          "additionalProperties": { "type": "string" }
+        },
+        "test_counts": {
+          "type": "object",
+          "description": "Testing only.",
+          "properties": {
+            "unit": { "type": "integer", "minimum": 0 },
+            "integration": { "type": "integer", "minimum": 0 },
+            "e2e": { "type": "integer", "minimum": 0 },
+            "passing": { "type": "integer", "minimum": 0 },
+            "failing": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "description": "Testing only.",
+          "properties": {
+            "lines": { "type": "number", "minimum": 0, "maximum": 100 },
+            "statements": { "type": "number", "minimum": 0, "maximum": 100 },
+            "functions": { "type": "number", "minimum": 0, "maximum": 100 },
+            "branches": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        "finding_outcomes": {
+          "type": "array",
+          "description": "Code-review re-review only. Tracks how each prior finding was handled.",
+          "items": {
+            "type": "object",
+            "required": ["id", "status"],
+            "properties": {
+              "id": { "type": "string" },
+              "status": { "enum": ["fixed", "modified", "dismissed", "deferred"] },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

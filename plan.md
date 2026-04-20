@@ -107,7 +107,7 @@ color: {color}
 {What to create/update on disk}
 ```
 
-### Task 3: Create brainstorm agent
+### Task 3: Create a brainstorm agent
 - **Files**: `plugins/yk-dev-pipeline/agents/brainstorm.md`
 - **Depends on**: Task 1 (references must exist for path references)
 - **Test mode**: no-test

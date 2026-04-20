@@ -1,21 +1,21 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "yk-dev-pipeline-skills",
+  "name": "ai-tools",
   "owner": {
     "name": "Yevhen Kondratyev"
   },
   "metadata": {
-    "description": "Complete 6-phase JS/TS development pipeline for Claude Code — from brainstorm (or investigation) to production-ready, tested, documented code.",
-    "version": "3.0.0"
+    "description": "Complete 6-phase JS/TS development pipeline for Claude Code — from brainstorm (or investigation) to production-ready, tested, documented code. Ships 7 phase agents, 2 orchestrator skills, 5 slash commands, and a validated state schema.",
+    "version": "3.1.0"
   },
   "plugins": [
     {
-      "name": "yk-dev-pipeline",
-      "source": "./plugins/yk-dev-pipeline",
-      "description": "Agent-based 6-phase JS/TS development pipeline with independent agents for each phase, parallel code review, and scoped tools. Skills kept for backward compatibility.",
-      "version": "3.0.0",
+      "name": "ai-tools",
+      "source": ".",
+      "description": "Agent-first 6-phase JS/TS development pipeline: independent agents for each phase, parallel code review, scoped tools, schema-validated state. Ships /pipeline-* slash commands. Falls back to skill-based orchestration on skill-only installs.",
+      "version": "3.1.0",
       "category": "development",
-      "tags": ["typescript", "javascript", "code-review", "testing", "documentation", "pipeline", "investigation", "debugging", "agents", "parallel-review"]
+      "tags": ["typescript", "javascript", "code-review", "testing", "documentation", "pipeline", "investigation", "debugging", "agents", "parallel-review", "slash-commands", "schema"]
     }
   ]
 }

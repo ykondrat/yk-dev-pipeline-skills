@@ -2,7 +2,7 @@
   <img src="https://avatars.githubusercontent.com/u/25372917?s=400&u=cb65675c0d91605c69be4e24dd2f5043b01125cc&v=4" width="120" height="120" style="border-radius: 50%;" alt="Yevhen Kondratyev" />
 </p>
 
-# 🏗️ Dev Pipeline for Claude — v3.0 (Agent-Based)
+# 🏗️ Dev Pipeline for Claude — v3.1 (Agent-First + Slash Commands + Schema)
 
 A comprehensive 6-phase development pipeline that turns Claude into a senior engineering team. From idea to production-ready, tested, documented code — using **independent agents** with isolated context, scoped tools, and per-phase model selection.
 
@@ -12,19 +12,28 @@ Brainstorm/Investigation → Planning → Implementation → Code Review → Tes
 
 ## What Is This?
 
-A collection of **Claude Code agents** (structured markdown files with YAML frontmatter) that guide Claude through a complete software development lifecycle for JavaScript/TypeScript projects. Each agent runs in its **own context window** with scoped tools, dedicated model, and self-verification gates.
+A collection of **Claude Code agents, skills, and slash commands** (structured markdown files with YAML frontmatter) that guide Claude through a complete software development lifecycle for JavaScript/TypeScript projects. Each agent runs in its **own context window** with scoped tools, dedicated model, self-verification gates, and operational guardrails (git safety + resume idempotency).
 
 **Think of it as a senior engineering team, where each team member has their own expertise and tools.**
 
-## What's New in v3.0
+## What's New in v3.1
+
+- **Two orchestrator skills** — `yk-dev-pipeline` (main router, auto-detects agents) + `yk-agent-orchestrator` (agent-first, explicit v3.0 flow)
+- **Five slash commands** — `/pipeline-start`, `/pipeline-continue`, `/pipeline-status`, `/pipeline-review`, `/pipeline-reset`
+- **Canonical JSON Schema** — `pipeline-state.schema.json` validates every state update. Explicit verdict → status mapping.
+- **Operational guardrails** — Every agent has a git-safety + resume-safety section (no unauthorized commits, no clobbering artifacts, idempotent re-runs)
+- **Deduplicated references** — Reference library lives in one place (`references/` at repo root); phase skills and agents both load from the same tree
+- **Frontmatter documentation** — `agents/FRONTMATTER.md` documents which YAML fields are authoritative vs advisory
+
+## What v3.0 Established
 
 - **Independent agents** — Each phase runs in its own context window (no cross-phase pollution)
 - **Scoped tools** — Code review is read-only, investigation can't edit source
 - **Per-phase models** — Opus for complex phases (brainstorm, implementation, review), Sonnet for structured phases
 - **Parallel code review** — 3 agents review simultaneously (security, quality, compliance)
 - **Self-verification gates** — Every agent validates its output before completing
-- **Research-backed improvements** — Mutation testing, property-based tests, hypothesis-evidence matrix, ADR automation, and more
-- **Backward compatible** — Original skills still work alongside agents
+- **Research-backed improvements** — Mutation testing, property-based tests, hypothesis-evidence matrix, ADR automation
+- **Backward compatible** — Phase skills kept for Claude.ai Projects uploads and skill-only installs
 
 ## Features
 
@@ -55,8 +64,8 @@ A collection of **Claude Code agents** (structured markdown files with YAML fron
 #### Plugin Marketplace
 
 ```bash
-/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git
-/plugin install yk-dev-pipeline@yk-dev-pipeline-skills
+/plugin marketplace add git@github.com:ykondrat/ai-tools.git
+/plugin install ai-tools@ai-tools
 ```
 
 After installation, restart Claude Code to apply changes.
@@ -68,20 +77,21 @@ After installation, restart Claude Code to apply changes.
 
 **Uninstall:**
 ```bash
-/plugin uninstall yk-dev-pipeline
+/plugin uninstall ai-tools
 ```
 
 ### Claude.ai Projects
 
 1. Go to [claude.ai](https://claude.ai) → **Projects** → **Create Project**
-2. Click **Add Knowledge** → upload the `plugins/yk-dev-pipeline/skills/` folder contents
+2. Click **Add Knowledge** → upload the `skills/` folder contents
 3. Add this to **Project Instructions**:
 
 ```
 You have access to the YK Dev Pipeline skills in your project knowledge.
 
 Available skills:
-- yk-dev-pipeline (router - start here for all requests)
+- yk-dev-pipeline (main entry — start here for all requests)
+- yk-agent-orchestrator (agent-first orchestrator — only usable if Task tool is available)
 - yk-brainstorm (Phase 1a: Requirements for new features)
 - yk-investigation (Phase 1b: Bug fixes, refactoring, performance)
 - yk-planning (Phase 2: Task breakdown)
@@ -90,10 +100,10 @@ Available skills:
 - yk-testing (Phase 5: Tests)
 - yk-documentation (Phase 6: Docs)
 
-When I request development work, read the appropriate SKILL.md file and follow
-its instructions. Start with skills/SKILL.md to understand the pipeline.
-
-Always read reference files when the skill instructs you to.
+When I request development work, start at skills/SKILL.md. It auto-detects
+whether agents are available and routes accordingly. Always read reference
+files when the skill instructs you to (look under references/ — the shared
+library at the repo root).
 ```
 
 ### Claude.ai Chat (One-time Use)
@@ -101,7 +111,7 @@ Always read reference files when the skill instructs you to.
 1. Download this repository as ZIP
 2. Start a new conversation at [claude.ai](https://claude.ai)
 3. Drag the ZIP into the chat
-4. Say: **"Read plugins/yk-dev-pipeline/skills/SKILL.md and help me build [your project]"**
+4. Say: **"Read skills/SKILL.md and help me build [your project]"**
 
 ## Quick Start
 
@@ -148,15 +158,35 @@ Each phase:
 
 | Phase | Skill | What It Does | Output |
 |-------|-------|-------------|--------|
-| 1a | [Brainstorm](plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md) | Requirements gathering, approach exploration | `spec.md`, design doc |
-| 1b | [Investigation](plugins/yk-dev-pipeline/skills/investigation/SKILL.md) | Debugging, root cause analysis, refactoring assessment | `spec.md`, investigation report |
-| 2 | [Planning](plugins/yk-dev-pipeline/skills/planning/SKILL.md) | Task breakdown, dependency graph | `plan.md`, `docs/plans/*-plan.md` |
-| 3 | [Implementation](plugins/yk-dev-pipeline/skills/implementation/SKILL.md) | Code writing with quality gates | Working code |
-| 4 | [Code Review](plugins/yk-dev-pipeline/skills/code-review/SKILL.md) | 18-area strict review | `review.md`, `fix-plan.md` |
-| 5 | [Testing](plugins/yk-dev-pipeline/skills/testing/SKILL.md) | Comprehensive test generation | Tests, `test-report.md`, `fix-test-plan.md` (if blocked) |
-| 6 | [Documentation](plugins/yk-dev-pipeline/skills/documentation/SKILL.md) | Full project documentation | README, API docs, etc. |
+| 1a | [Brainstorm](skills/brainstorm/SKILL.md) | Requirements gathering, approach exploration | `spec.md`, design doc |
+| 1b | [Investigation](skills/investigation/SKILL.md) | Debugging, root cause analysis, refactoring assessment | `spec.md`, investigation report |
+| 2 | [Planning](skills/planning/SKILL.md) | Task breakdown, dependency graph | `plan.md`, `docs/plans/*-plan.md` |
+| 3 | [Implementation](skills/implementation/SKILL.md) | Code writing with quality gates | Working code |
+| 4 | [Code Review](skills/code-review/SKILL.md) | 18-area strict review | `review.md`, `fix-plan.md` |
+| 5 | [Testing](skills/testing/SKILL.md) | Comprehensive test generation | Tests, `test-report.md`, `fix-test-plan.md` (if blocked) |
+| 6 | [Documentation](skills/documentation/SKILL.md) | Full project documentation | README, API docs, etc. |
 
 > **Routing note:** The Router handles all general requests and routes to the correct phase. Phases 1a-3 only trigger on explicit phase-name mentions; Phases 4-6 also work standalone.
+
+## Slash Commands
+
+Installing the plugin registers five `/pipeline-*` commands for explicit pipeline control:
+
+| Command | What it does |
+|---------|--------------|
+| `/pipeline-start <description>` | Kick off a fresh pipeline run with phase selection |
+| `/pipeline-continue [note]` | Resume from `pipeline-state.json` — auto-picks next phase or fix loop |
+| `/pipeline-status` | Read-only snapshot of phase progress, findings, blockers |
+| `/pipeline-review [full \| security \| quality \| compliance \| parallel \| diff]` | Trigger code review standalone |
+| `/pipeline-reset [confirm]` | Archive current artifacts so a fresh run can start |
+
+## State Schema
+
+`pipeline-state.schema.json` (at the repo root) is the canonical JSON Schema (draft-07) for `pipeline-state.json`. Every agent and orchestrator validates its state updates against this schema. Key invariants:
+
+- `brainstorm` and `investigation` are mutually exclusive — never both.
+- Code-review verdicts map 1:1 to status: 🛑 Block / ⚠️ Request Changes → `blocked`; ✅ Approve / ✅ Approve+ → `completed`.
+- Testing may not be `completed` while `test_counts.failing > 0`.
 
 ## Example Usage
 
@@ -192,49 +222,44 @@ Claude: [Documentation] README, API docs, architecture, deployment guide
 ## Repository Structure
 
 ```
-yk-dev-pipeline-skills/
+ai-tools/
 ├── .claude-plugin/
-│   └── marketplace.json                 ← Marketplace catalog
-├── plugins/
-│   └── yk-dev-pipeline/
-│       ├── .claude-plugin/
-│       │   └── plugin.json              ← Plugin manifest
-│       └── skills/
-│           ├── SKILL.md                 ← Pipeline router
-│           ├── brainstorm/
-│           │   ├── SKILL.md             ← Phase 1a
-│           │   └── references/
-│           │       └── creativity-techniques.md
-│           ├── investigation/
-│           │   ├── SKILL.md             ← Phase 1b
-│           │   └── references/
-│           │       └── investigation-patterns.md
-│           ├── planning/
-│           │   └── SKILL.md             ← Phase 2
-│           ├── implementation/
-│           │   ├── SKILL.md             ← Phase 3
-│           │   └── references/
-│           │       ├── js-ts-best-practices.md
-│           │       ├── clean-code-principles.md
-│           │       ├── security-patterns.md
-│           │       ├── implementation-standards.md
-│           │       ├── databases-sql.md
-│           │       ├── databases-nosql.md
-│           │       ├── databases-redis.md
-│           │       ├── frameworks-web.md
-│           │       └── frameworks-frontend.md
-│           ├── code-review/
-│           │   ├── SKILL.md             ← Phase 4
-│           │   └── references/
-│           │       └── review-checklists.md
-│           ├── testing/
-│           │   ├── SKILL.md             ← Phase 5
-│           │   └── references/
-│           │       └── test-patterns.md
-│           └── documentation/
-│               ├── SKILL.md             ← Phase 6
-│               └── references/
-│                   └── doc-templates.md
+│   ├── marketplace.json                 ← Marketplace catalog (source: ".")
+│   └── plugin.json                      ← Plugin manifest
+├── agents/                              ← v3.0 phase agents (isolated context)
+│   ├── brainstorm.md
+│   ├── investigation.md
+│   ├── planning.md
+│   ├── implementation.md
+│   ├── code-review.md
+│   ├── testing.md
+│   ├── documentation.md
+│   └── FRONTMATTER.md
+├── skills/                              ← Skill-based fallbacks (v2.0) + orchestrators
+│   ├── SKILL.md                         ← yk-dev-pipeline (main router)
+│   ├── agent-orchestrator/
+│   │   └── SKILL.md                     ← yk-agent-orchestrator (v3.0)
+│   ├── brainstorm/SKILL.md              ← Phase 1a
+│   ├── investigation/SKILL.md           ← Phase 1b
+│   ├── planning/SKILL.md                ← Phase 2
+│   ├── implementation/SKILL.md          ← Phase 3
+│   ├── code-review/SKILL.md             ← Phase 4
+│   ├── testing/SKILL.md                 ← Phase 5
+│   ├── documentation/SKILL.md           ← Phase 6
+│   └── package.json
+├── commands/                            ← /pipeline-* slash commands
+│   ├── pipeline-start.md
+│   ├── pipeline-continue.md
+│   ├── pipeline-status.md
+│   ├── pipeline-review.md
+│   └── pipeline-reset.md
+├── references/                          ← Shared reference library
+│   ├── brainstorm/creativity-techniques.md
+│   ├── investigation/investigation-patterns.md
+│   ├── implementation/                  ← 9 files (clean-code, js-ts, security, databases, frameworks)
+│   ├── code-review/review-checklists.md
+│   ├── testing/test-patterns.md
+│   └── documentation/doc-templates.md
 ├── examples/
 │   ├── pipeline-state.example.json
 │   ├── pipeline-state-investigation.example.json
@@ -243,9 +268,12 @@ yk-dev-pipeline-skills/
 │   ├── fix-plan.example.md
 │   ├── fix-test-plan.example.md
 │   └── test-report.example.md
+├── pipeline-state.schema.json           ← JSON Schema draft-07 for pipeline-state.json
 ├── README.md                            ← You are here
 ├── USAGE.md
 ├── CONTRIBUTING.md
+├── CLAUDE.md
+├── TESTING.md
 ├── LICENSE
 └── .skillrc.json
 ```
@@ -287,11 +315,11 @@ Areas where contributions are welcome:
 This skill collection is structured as a **Claude Code plugin marketplace** repo. It can be installed via:
 
 ```bash
-/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git
-/plugin install yk-dev-pipeline@yk-dev-pipeline-skills
+/plugin marketplace add git@github.com:ykondrat/ai-tools.git
+/plugin install ai-tools@ai-tools
 ```
 
-The `.claude-plugin/marketplace.json` at the repo root defines the marketplace catalog, and `plugins/yk-dev-pipeline/.claude-plugin/plugin.json` provides the plugin manifest. Skills are auto-discovered from the `skills/` directory within the plugin.
+The `.claude-plugin/marketplace.json` at the repo root defines the marketplace catalog, and `.claude-plugin/plugin.json` (also at the root) provides the plugin manifest. The repo uses a flat single-plugin layout — `source: "."` in the marketplace points at the repo root itself. Agents, skills, and commands are auto-discovered from `agents/`, `skills/`, and `commands/` at the root.
 
 ## Security
 

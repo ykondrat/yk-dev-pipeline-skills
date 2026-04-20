@@ -20,7 +20,9 @@
       "completed_at": "2026-02-11T11:00:00Z",
       "outputs": [
         "plan.md"
-      ]
+      ],
+      "task_count": 10,
+      "phase_count": 3
     },
     "implementation": {
       "status": "completed",
@@ -37,7 +39,7 @@
         {"id": "CR-003", "status": "modified", "reason": "Used structured logger instead of console.error"},
         {"id": "CR-004", "status": "dismissed", "reason": "Redis health already checked via ping in startup"}
       ],
-      "detected_stack": {
+      "tech_stack": {
         "runtime": "node 20",
         "framework": "fastify",
         "language": "typescript (strict)",
@@ -54,15 +56,13 @@
         "review.md",
         "fix-plan.md"
       ],
-      "verdict": "approve-with-suggestions",
-      "findings": {
+      "verdict": "✅ Approve+",
+      "findings_counts": {
         "critical": 0,
         "major": 0,
         "minor": 4,
-        "nitpick": 7,
-        "debatable": 2
+        "nitpick": 7
       },
-      "cross_step_impacts": [],
       "doc_impacts": [
         "New endpoint POST /api/urls — added URL creation",
         "New env var REDIS_URL — Redis connection string",
@@ -83,25 +83,28 @@
     "testing": {
       "status": "in-progress",
       "outputs": [],
-      "test_runner": "vitest",
-      "total_tests": 23,
-      "passing": 21,
-      "failing": 2,
+      "test_counts": {
+        "unit": 18,
+        "integration": 5,
+        "e2e": 0,
+        "passing": 21,
+        "failing": 2
+      },
       "coverage": {
-        "statements": "74%",
-        "branches": "68%",
-        "functions": "82%",
-        "lines": "75%"
+        "statements": 74,
+        "branches": 68,
+        "functions": 82,
+        "lines": 75
       },
       "quality_metrics": {
-        "assertion_density": "2.8",
-        "mutation_score": "65%",
+        "assertion_density": 2.8,
+        "mutation_score": 65,
         "property_tests": 4
-      }
+      },
+      "test_runner": "vitest"
     },
     "documentation": {
-      "status": "pending",
-      "last_documented_commit": null
+      "status": "pending"
     }
   }
 }

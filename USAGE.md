@@ -3,12 +3,14 @@
 This guide shows you how to use the pipeline agents and skills in different environments.
 
 ## Table of Contents
-1. [Using in Claude Code (CLI) — Agent Mode (v3.0)](#using-in-claude-code-cli)
-2. [Using Agents Standalone](#using-agents-standalone)
-3. [Using in Claude.ai Projects](#using-in-claudeai-projects)
-4. [Using in Claude.ai Chat](#using-in-claudeai-chat)
-5. [Skill Invocation Methods](#skill-invocation-methods)
-6. [Common Workflows](#common-workflows)
+1. [Using in Claude Code (CLI) — Agent Mode (v3.0+)](#using-in-claude-code-cli)
+2. [Slash Commands](#slash-commands)
+3. [Using Agents Standalone](#using-agents-standalone)
+4. [Using in Claude.ai Projects](#using-in-claudeai-projects)
+5. [Using in Claude.ai Chat](#using-in-claudeai-chat)
+6. [Skill Invocation Methods](#skill-invocation-methods)
+7. [Common Workflows](#common-workflows)
+8. [Pipeline State Schema](#pipeline-state-schema)
 
 ---
 
@@ -18,8 +20,8 @@ This guide shows you how to use the pipeline agents and skills in different envi
 
 ```bash
 # Add the marketplace, then install the plugin
-/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git
-/plugin install yk-dev-pipeline@yk-dev-pipeline-skills
+/plugin marketplace add git@github.com:ykondrat/ai-tools.git
+/plugin install ai-tools@ai-tools
 ```
 
 After installation, restart Claude Code to apply changes.
@@ -31,19 +33,35 @@ To verify installation:
 
 To uninstall:
 ```bash
-/plugin uninstall yk-dev-pipeline
+/plugin uninstall ai-tools
 ```
 
 ### Invocation in Claude Code
 
 After installation, Claude Code automatically detects the plugin skills. You can invoke them:
 
-#### Slash Command (Skill-based — orchestrator)
-```bash
-/yk-dev-pipeline
+#### Skill invocation (main entry)
+```
+@yk-dev-pipeline
 ```
 
-This invokes the pipeline orchestrator, which manages all 6 phases via independent agents. Individual phases run as agents in their own context windows — the orchestrator handles routing, state, and handoffs.
+This invokes the main router, which auto-detects whether agents are available and hands off to `yk-agent-orchestrator` (v3.0 flow) or runs the pipeline in-place using the phase SKILL.md files (v2.0 flow). Individual phases run as agents in their own context windows when agents are available.
+
+If you want to force the agent flow explicitly (or bypass the router), invoke `@yk-agent-orchestrator` directly — it will stop and hand back if agents aren't available.
+
+#### Pipeline slash commands
+
+The plugin registers five `/pipeline-*` commands for explicit control:
+
+```
+/pipeline-start Build me a URL shortener
+/pipeline-continue
+/pipeline-status
+/pipeline-review parallel
+/pipeline-reset
+```
+
+See the [Slash Commands](#slash-commands) section below for details.
 
 #### Natural Language Trigger
 Just describe what you want — the Router detects your intent and routes to the correct phase:
@@ -70,6 +88,65 @@ Just describe what you want — the Router detects your intent and routes to the
 
 ---
 
+## Slash Commands
+
+Five commands ship with the plugin for explicit pipeline control. Each is a markdown file under `commands/` at the repo root.
+
+### `/pipeline-start <description>`
+
+Kick off a fresh pipeline run. The command uses `AskUserQuestion` to let you select entry phase (brainstorm / investigation) and which of the 7 phases to include, then invokes the correct agent via the Task tool.
+
+```
+/pipeline-start Build me a REST API for a task manager
+/pipeline-start Investigate the flaky payments webhook
+```
+
+Resume-safety: refuses to overwrite an existing `pipeline-state.json`. Use `/pipeline-continue` or `/pipeline-reset` instead.
+
+### `/pipeline-continue [note]`
+
+Resume from the current `pipeline-state.json`. The command reads the state, determines the next action (next pending phase, resume in-progress phase, or enter fix loop if a phase is `blocked`), and invokes the corresponding agent. An optional `note` is passed as extra context to the next agent.
+
+```
+/pipeline-continue
+/pipeline-continue prioritize performance fixes
+```
+
+### `/pipeline-status`
+
+Read-only snapshot. Reads `pipeline-state.json`, validates it against the schema, and prints per-phase progress, findings counts, blockers, and a suggested next step. Never invokes agents.
+
+```
+/pipeline-status
+```
+
+### `/pipeline-review [full | security | quality | compliance | parallel | diff]`
+
+Trigger code review standalone — works on any codebase, no prior pipeline required.
+
+| Mode | Behavior |
+|------|----------|
+| `full` (default) | One `code-review` agent, all 18 areas → `review.md` + `fix-plan.md` |
+| `security` / `quality` / `compliance` | One focused agent → `review-{focus}.md` |
+| `parallel` | Three `code-review` agents in parallel (security + quality + compliance), merged into a unified `review.md` |
+| `diff` | Review only files changed on the current branch vs `origin/main` |
+
+```
+/pipeline-review parallel
+/pipeline-review diff
+```
+
+### `/pipeline-reset [confirm]`
+
+Archive the current pipeline artifacts (`pipeline-state.json`, `spec.md`, `plan.md`, `review.md`, `fix-plan.md`, `test-report.md`, etc.) to `.pipeline-archive/<timestamp>/` so a fresh run can start. Source code and tests are never touched. Requires explicit confirmation (either the literal `confirm` argument or an `AskUserQuestion` answer).
+
+```
+/pipeline-reset
+/pipeline-reset confirm
+```
+
+---
+
 ## Using Agents Standalone
 
 Each pipeline agent can be used independently without the full pipeline:
@@ -88,9 +165,9 @@ Type `@` in Claude Code and select from the agent list:
 
 ### Via CLI flag
 ```bash
-claude --agent yk-dev-pipeline:brainstorm
-claude --agent yk-dev-pipeline:code-review
-claude --agent yk-dev-pipeline:testing
+claude --agent ai-tools:brainstorm
+claude --agent ai-tools:code-review
+claude --agent ai-tools:testing
 ```
 
 ### Parallel Code Review
@@ -112,7 +189,7 @@ Results are consolidated into a unified `review.md` with deduplicated findings.
 ### Setup
 
 1. Go to [claude.ai](https://claude.ai) → **Projects** → **Create Project**
-2. Click **Add Knowledge** → Upload the `plugins/yk-dev-pipeline/skills/` folder contents
+2. Click **Add Knowledge** → Upload the `skills/` folder contents
 3. Add this to **Project Instructions**:
 
 ```markdown
@@ -165,9 +242,9 @@ Claude will:
 ### Invocation
 
 ```
-"Read plugins/yk-dev-pipeline/skills/SKILL.md and help me build a task management API"
-"Use plugins/yk-dev-pipeline/skills/brainstorm/SKILL.md to explore requirements for user auth"
-"Apply plugins/yk-dev-pipeline/skills/code-review/SKILL.md to review my TypeScript code"
+"Read skills/SKILL.md and help me build a task management API"
+"Use skills/brainstorm/SKILL.md to explore requirements for user auth"
+"Apply skills/code-review/SKILL.md to review my TypeScript code"
 ```
 
 ---
@@ -582,7 +659,7 @@ This file helps Claude:
 ### "Skill not found"
 - **Claude Code**:
   - Run `/plugin list` to verify installation
-  - If not listed, reinstall with `/plugin marketplace add git@github.com:ykondrat/yk-dev-pipeline-skills.git` then `/plugin install yk-dev-pipeline@yk-dev-pipeline-skills`
+  - If not listed, reinstall with `/plugin marketplace add git@github.com:ykondrat/ai-tools.git` then `/plugin install ai-tools@ai-tools`
   - Restart Claude Code after installation
 - **Claude.ai**: Re-upload the skills folder to your project knowledge
 
@@ -650,13 +727,33 @@ Output: Comprehensive review report in ~5 minutes
 
 ---
 
+## Pipeline State Schema
+
+`pipeline-state.json` is the single source of truth for pipeline progress. Every agent and orchestrator updates it, and every update must validate against [`pipeline-state.schema.json`](pipeline-state.schema.json) (JSON Schema draft-07).
+
+Key invariants enforced by the schema:
+
+- `brainstorm` and `investigation` are mutually exclusive — never both keys in `phases`.
+- `version`, `created_at`, `project_name`, `current_phase`, `phases` are required.
+- Code-review verdict → status mapping: `🛑 Block` / `⚠️ Request Changes` → `blocked`; `✅ Approve` / `✅ Approve+` → `completed`.
+- Testing may not be `completed` while `test_counts.failing > 0` (agent rule — not schema-enforced, but checked by the agent and orchestrator).
+
+You can validate a state file locally with any JSON Schema draft-07 validator, e.g.:
+
+```bash
+npx ajv validate -s pipeline-state.schema.json -d pipeline-state.json
+```
+
+---
+
 ## Next Steps
 
 - Read [CLAUDE.md](CLAUDE.md) for repository-specific guidance
 - Check [examples/](examples/) for example artifacts: pipeline state, plan, review, fix plans, test report
-- Review individual SKILL.md files to understand each phase
-- Read reference materials in `plugins/yk-dev-pipeline/skills/*/references/` for deep dives
+- Review individual SKILL.md files under `skills/` and the agent files under `agents/`
+- Read reference materials in `references/` (shared library, deduplicated)
+- See [`agents/FRONTMATTER.md`](agents/FRONTMATTER.md) for which YAML fields are authoritative vs advisory
 
 ---
 
-**Ready to start?** Just say: `"Let's build something with yk-dev-pipeline"`
+**Ready to start?** Just say: `"Let's build something with yk-dev-pipeline"` — or run `/pipeline-start` if you prefer the explicit command flow.

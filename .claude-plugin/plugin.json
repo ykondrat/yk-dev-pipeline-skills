@@ -1,0 +1,8 @@
+{
+  "name": "ai-tools",
+  "version": "3.1.0",
+  "description": "Agent-first 6-phase JS/TS development pipeline. Seven phase agents (brainstorm, investigation, planning, implementation, code-review, testing, documentation) run in isolated context windows with scoped tools. Two orchestrator skills: `yk-dev-pipeline` (main router — picks agent path or skill path by availability) and `yk-agent-orchestrator` (agent-first, coordinates parallel code review). Five slash commands (/pipeline-start, /pipeline-continue, /pipeline-status, /pipeline-review, /pipeline-reset). All state updates validate against pipeline-state.schema.json. Skills kept for skill-only installs and backward compatibility.",
+  "author": {
+    "name": "Yevhen Kondratyev"
+  }
+}
